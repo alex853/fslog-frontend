@@ -1,0 +1,75 @@
+<html>
+
+<head>
+
+    <title>FSLog - Logbook</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-table.min.css">
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-table.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc',
+                //method: 'POST',
+                dataType: 'json',
+                success: function (response) {
+                    var body = JSON.parse(response.body); 
+                    $('#logbook').bootstrapTable({
+                        data: body.Items
+                    });
+                    $('#logbook').bootstrapTable('resetView', {
+                        height: $('#logbook').height() + 30
+                    });
+                },
+                error: function (e) {
+                    console.log(e.responseText);
+                }
+            });
+        });
+
+        function pilotFlightsPageLink(value) {
+            return '<a href="pilot-flights.html?pilotNumber=' + value + '">' + value + '</a>';
+        }
+
+    </script>
+
+    <style>
+        .fixed-table-container { /* lets disable frame around table */
+            border-width: 0px 0px 0px 0px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <h1>Logbook</h1>
+
+    <table id="logbook" class="table table-no-bordered">
+        <thead>
+        <tr>
+            <th data-field="Date">DOF</th>
+            <th data-field="Type">&nbsp;</th>
+            <th data-field="AircraftType">Type</th>
+            <th data-field="AircraftRegistration">Tail #</th>
+            <th data-field="Departure">From</th>
+            <th data-field="Destination">To</th>
+            <!--th data-field="takeoff">Takeoff</th>
+            <th data-field="landing">Landing</th-->
+            <th data-field="Duration">Time</th>
+            <th data-field="Distance">Distance</th>
+            <th data-field="Comment">Comment</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+</body>
+
+</html>
