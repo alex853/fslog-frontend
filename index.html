@@ -11,15 +11,18 @@
     <script src="js/bootstrap-table.min.js"></script>
 
     <script>
+        var records = undefined;
+
         $(document).ready(function () {
             $.ajax({
                 url: 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc',
                 //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    var body = JSON.parse(response.body); 
+                    var body = JSON.parse(response.body);
+                    records = body.Items;
                     $('#logbook').bootstrapTable({
-                        data: body.Items
+                        data: records
                     });
                     $('#logbook').bootstrapTable('resetView', {
                         height: $('#logbook').height() + 30
@@ -33,6 +36,57 @@
 
         function pilotFlightsPageLink(value) {
             return '<a href="pilot-flights.html?pilotNumber=' + value + '">' + value + '</a>';
+        }
+
+        function actionsCellFormatter(value, row, index) {
+            // var result = '<a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')">Info</a>';
+
+            var result = '<button type="button" class="btn btn-outline-info btn-sm" onclick="recordInfo(' + index + ')">Info</button>';
+
+            // var isTransfer = ;
+            // var isDiscontinuity = ;
+            // var isFlight = !isTransfer && !isDiscontinuity;
+
+            var isLast = index == records.length-1;
+
+            // var isNextFlight;
+            // var isNextTransfer;
+            var isNextDiscontinuity = !isLast && records[index+1].Type === 'discontinuity';
+
+            if (isLast || isNextDiscontinuity) {
+                result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Flight">+ Flight</a>';
+            }
+
+            if (isLast || isNextDiscontinuity) {
+                result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Transfer">+ Transfer</a>';
+            }
+
+            result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Discontinuity">+ Disc</a>';
+
+            return result;
+        }
+
+        function recordInfo(index) {
+            $('#exampleModal').modal();
+        }
+
+        function logbookRowStyle(row, index) {
+            var type = row.Type;
+            if (type === 'transfer') {
+                return {
+                    css: {
+                        'background-color': '#F0FFFF'
+                    }
+                }
+            } else if (type === 'discontinuity') {
+                return {
+                    css: {
+                        'background-color': '#FFFFF0'
+                    }
+                }
+            }
+
+            return {};
         }
 
     </script>
@@ -49,7 +103,10 @@
 <div class="container-fluid">
     <h1>Logbook</h1>
 
-    <table id="logbook" class="table table-no-bordered">
+    <table
+            id="logbook"
+            class="table table-no-bordered"
+            data-row-style="logbookRowStyle">
         <thead>
         <tr>
             <th data-field="Date">DOF</th>
@@ -63,11 +120,34 @@
             <th data-field="Duration">Time</th>
             <th data-field="Distance">Distance</th>
             <th data-field="Comment">Comment</th>
+            <th data-formatter="actionsCellFormatter"></th>
         </tr>
         </thead>
         <tbody>
         </tbody>
     </table>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>
