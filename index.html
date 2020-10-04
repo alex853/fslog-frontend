@@ -47,14 +47,14 @@
             // var isDiscontinuity = ;
             // var isFlight = !isTransfer && !isDiscontinuity;
 
-            var isLast = index == records.length-1;
+            var isLast = index === records.length-1;
 
             // var isNextFlight;
             // var isNextTransfer;
             var isNextDiscontinuity = !isLast && records[index+1].Type === 'discontinuity';
 
             if (isLast || isNextDiscontinuity) {
-                result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Flight">+ Flight</a>';
+                result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="addFlight(' + index + ')" title="Add Flight">+ Flight</button>';
             }
 
             if (isLast || isNextDiscontinuity) {
@@ -67,7 +67,12 @@
         }
 
         function recordInfo(index) {
-            $('#exampleModal').modal();
+            $('#flightInfoModal').modal();
+        }
+
+        function addFlight(index) {
+            $('#addFlightModal').modal();
+            // $('#exampleModal').modal();
         }
 
         function logbookRowStyle(row, index) {
@@ -133,7 +138,6 @@
 </div>
 
 
-<!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -153,6 +157,49 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal fade" id="flightInfoModal" tabindex="-1" role="dialog" aria-labelledby="flightInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="flightInfoLabel">Flight Info bla-bla-bla</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                BLA-BLA-BLA
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary">Edit</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="addFlightModal" tabindex="-1" role="dialog" aria-labelledby="addFlightModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFlightLabel">Add Flight</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                BLA-BLA-BLA-342423423424243
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 </body>
 
