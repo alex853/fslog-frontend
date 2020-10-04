@@ -95,6 +95,10 @@
         .fixed-table-container { /* lets disable frame around table */
             border-width: 0px 0px 0px 0px;
         }
+
+        .nobr {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -109,7 +113,7 @@
             data-row-style="logbookRowStyle">
         <thead>
         <tr>
-            <th data-field="Date">DOF</th>
+            <th data-field="Date" data-class="nobr">DOF</th>
             <th data-field="Type">&nbsp;</th>
             <th data-field="AircraftType">Type</th>
             <th data-field="AircraftRegistration">Tail #</th>
