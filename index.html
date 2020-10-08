@@ -71,8 +71,25 @@
         }
 
         function addFlight(index) {
-            $('#addFlightModal').modal();
-            // $('#exampleModal').modal();
+            var previousRecord = records[index];
+
+            var type = previousRecord['Type'];
+            var isPreviousTransfer = type === 'transfer';
+            var isPreviousFlight = (type !== 'transfer') && (type !== 'discontinuity');
+
+            var dialog = $('#flightEditorModal');
+
+            dialog.find('.modal-title').text('Add Flight');
+
+            $('#flightEditorModal-dateOfFlight').val(new Date().toISOString().split('T')[0]);
+            $('#flightEditorModal-callsign').val(isPreviousFlight ? previousRecord['Callsign'] : undefined);
+            $('#flightEditorModal-flightNumber').val(isPreviousFlight ? previousRecord['FlightNumber'] : undefined);
+            $('#flightEditorModal-aircraftType').val(isPreviousFlight ? previousRecord['AircraftType'] : undefined);
+            $('#flightEditorModal-aircraftRegistration').val(isPreviousFlight ? previousRecord['AircraftRegistration'] : undefined);
+            $('#flightEditorModal-departure').val(isPreviousFlight || isPreviousTransfer ? previousRecord['Destination'] : undefined);
+            $('#flightEditorModal-destination').val(undefined);
+
+            dialog.modal();
         }
 
         function logbookRowStyle(row, index) {
@@ -180,91 +197,104 @@
 </div>
 
 
-<div class="modal fade" id="addFlightModal" tabindex="-1" role="dialog" aria-labelledby="addFlightModalLabel" aria-hidden="true">
+<div class="modal fade" id="flightEditorModal" tabindex="-1" role="dialog" aria-labelledby="flightEditorModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addFlightLabel">Add Flight</h5>
+                <h5 class="modal-title" id="flightEditorModalLabel">[Flight Editor]</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <form>
-                    <div class="form-group row">
-                        <label for="addFlight-dateOfFlight" class="col-md-2 col-form-label">Date</label>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control" id="addFlight-dateOfFlight" placeholder="YYYY-MM-DD">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-dateOfFlight">Date</label>
+                            <input type="text" class="form-control" id="flightEditorModal-dateOfFlight" placeholder="YYYY-MM-DD">
                         </div>
                     </div>
                     <div class="form-row">
-                        callsign/flightnumber
-                    </div>
-                    <div class="form-group row">
-                        <label for="addFlight-aircraftType" class="col-md-3 col-form-label">Aircraft Type</label>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" id="addFlight-aircraftType" placeholder="C172">
-                        </div>
-                        <label for="addFlight-aircraftRegistration" class="col-md-3 col-form-label">Tail #</label>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" id="addFlight-aircraftRegistration" placeholder="N172FS">
-                        </div>
-                    </div>
-                    <!--div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="addFlight-aircraftType">Aircraft Type</label>
-                            <input type="text" class="form-control" id="addFlight-aircraftType" placeholder="C172">
+                            <label for="flightEditorModal-callsign">Callsign</label>
+                            <input type="text" class="form-control" id="flightEditorModal-callsign" placeholder="BAW1">
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="addFlight-aircraftRegistration">Tail #</label>
-                            <input type="text" class="form-control" id="addFlight-aircraftRegistration" placeholder="N172FS">
+                            <label for="flightEditorModal-flightNumber">Flight Number</label>
+                            <input type="text" class="form-control" id="flightEditorModal-flightNumber" placeholder="BA001">
                         </div>
-                    </div-->
+                    </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="addFlight-departure">Departure</label>
-                            <input type="text" class="form-control" id="addFlight-departure" placeholder="EGLL">
+                            <label for="flightEditorModal-aircraftType">Aircraft Type</label>
+                            <input type="text" class="form-control" id="flightEditorModal-aircraftType" placeholder="C172">
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="addFlight-destination">Destination</label>
-                            <input type="text" class="form-control" id="addFlight-destination" placeholder="KJFK">
+                            <label for="flightEditorModal-aircraftRegistration">Tail #</label>
+                            <input type="text" class="form-control" id="flightEditorModal-aircraftRegistration" placeholder="N172FS">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-departure">Departure</label>
+                            <input type="text" class="form-control" id="flightEditorModal-departure" placeholder="EGLL">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-destination">Destination</label>
+                            <input type="text" class="form-control" id="flightEditorModal-destination" placeholder="KJFK">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
-                            <label for="addFlight-timeOut">Blocks Off</label>
-                            <input type="text" class="form-control" id="addFlight-timeOut" placeholder="HH:MM">
+                            <label for="flightEditorModal-timeOut">Blocks Off</label>
+                            <input type="text" class="form-control" id="flightEditorModal-timeOut" placeholder="HH:MM">
                         </div>
                         <div class="form-group col-md-3">
-                            <label for="addFlight-timeOff">Takeoff</label>
-                            <input type="text" class="form-control" id="addFlight-timeOff" placeholder="HH:MM">
+                            <label for="flightEditorModal-timeOff">Takeoff</label>
+                            <input type="text" class="form-control" id="flightEditorModal-timeOff" placeholder="HH:MM">
                         </div>
                         <div class="form-group col-md-3">
-                            <label for="addFlight-timeOn">Landing</label>
-                            <input type="text" class="form-control" id="addFlight-timeOn" placeholder="HH:MM">
+                            <label for="flightEditorModal-timeOn">Landing</label>
+                            <input type="text" class="form-control" id="flightEditorModal-timeOn" placeholder="HH:MM">
                         </div>
                         <div class="form-group col-md-3">
-                            <label for="addFlight-timeIn">Blocks On</label>
-                            <input type="text" class="form-control" id="addFlight-timeIn" placeholder="HH:MM">
+                            <label for="flightEditorModal-timeIn">Blocks On</label>
+                            <input type="text" class="form-control" id="flightEditorModal-timeIn" placeholder="HH:MM">
                         </div>
                     </div>
                     <div class="form-row">
-                        duration/flight/air
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-flightTime">Flight Time</label>
+                            <input type="text" class="form-control" id="flightEditorModal-flightTime" placeholder="HH:MM">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-airTime">Air Time</label>
+                            <input type="text" class="form-control" id="flightEditorModal-airTime" placeholder="HH:MM">
+                        </div>
                     </div>
                     <div class="form-row">
-                        distance/direct/route
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-distance">Direct Distance, NM</label>
+                            <input type="text" class="form-control" id="flightEditorModal-distance" placeholder="123">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="flightEditorModal-distance1">Flown Distance, NM</label>
+                            <input type="text" class="form-control" id="flightEditorModal-distance1" placeholder="132">
+                        </div>
                     </div>
-                    <div class="form-row">
-                        comment
+                    <div class="form-group">
+                        <label for="flightEditorModal-comment" class="col-form-label">Comment</label>
+                        <textarea class="form-control" id="flightEditorModal-comment"></textarea>
                     </div>
-                    <div class="form-row">
-                        remarks
+                    <div class="form-group">
+                        <label for="flightEditorModal-remarks" class="col-form-label">Remarks</label>
+                        <input type="text" class="form-control" id="flightEditorModal-remarks" placeholder="">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-primary">Apply</button>
             </div>
         </div>
     </div>
