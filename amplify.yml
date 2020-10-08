@@ -12,7 +12,7 @@ frontend:
   cache:
     paths: []
   customHeaders:
-    - pattern: '*.js'
+    - pattern: '*.html'
       headers:
         - key: 'Access-Control-Allow-Origin'
           value: '*'
