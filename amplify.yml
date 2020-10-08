@@ -11,3 +11,8 @@ frontend:
       - '**/*'
   cache:
     paths: []
+  customHeaders:
+    - pattern: '*.js'
+      headers:
+        - key: 'Access-Control-Allow-Origin'
+          value: '*'

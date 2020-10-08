@@ -11,15 +11,18 @@
     <script src="js/bootstrap-table.min.js"></script>
 
     <script>
+        var gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
+
         var records = undefined;
 
         $(document).ready(function () {
             $.ajax({
-                url: 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc',
-                //method: 'POST',
+                url: gatewayUrl,
+                method: 'GET',
                 dataType: 'json',
                 success: function (response) {
-                    var body = JSON.parse(response.body);
+                    // var body = JSON.parse(response.body);
+                    var body = response;
                     records = body.Items;
                     $('#logbook').bootstrapTable({
                         data: records
@@ -47,11 +50,11 @@
             // var isDiscontinuity = ;
             // var isFlight = !isTransfer && !isDiscontinuity;
 
-            var isLast = index === records.length-1;
+            var isLast = index === records.length - 1;
 
             // var isNextFlight;
             // var isNextTransfer;
-            var isNextDiscontinuity = !isLast && records[index+1].Type === 'discontinuity';
+            var isNextDiscontinuity = !isLast && records[index + 1].Type === 'discontinuity';
 
             if (isLast || isNextDiscontinuity) {
                 result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="addFlight(' + index + ')" title="Add Flight">+ Flight</button>';
@@ -78,6 +81,7 @@
             var isPreviousFlight = (type !== 'transfer') && (type !== 'discontinuity');
 
             var dialog = $('#flightEditorModal');
+            dialog.action = 'add-flight';
 
             dialog.find('.modal-title').text('Add Flight');
 
@@ -90,6 +94,70 @@
             $('#flightEditorModal-destination').val(undefined);
 
             dialog.modal();
+        }
+
+        /*$(document).ready(function () {
+            $('#flightEditorModal-destination').keypress(function () {
+                $('#flightEditorModal-crowFlightDistance').val(Math.random());
+            });
+        });*/
+
+        function flightEditorModal_apply() {
+            var dialog = $('#flightEditorModal');
+            var action = dialog.action;
+
+            var form = $('#flightEditorModal-form')[0];
+            var valid = form.checkValidity();
+            form.classList.add('was-validated');
+            if (!valid) {
+                return;
+            }
+
+            var flight = {
+                "UserID": 1,
+                "BeginningDT": $('#flightEditorModal-dateOfFlight').val() + 'T' + $('#flightEditorModal-timeOut').val(),
+                "Type": "flight",
+                "Date": $('#flightEditorModal-dateOfFlight').val(),
+                "Callsign": nonEmpty($('#flightEditorModal-callsign').val()),
+                "FlightNumber": nonEmpty($('#flightEditorModal-flightNumber').val()),
+                "AircraftType": nonEmpty($('#flightEditorModal-aircraftType').val()),
+                "AircraftRegistration": nonEmpty($('#flightEditorModal-aircraftRegistration').val()),
+                "Departure": nonEmpty($('#flightEditorModal-departure').val()),
+                "Destination": nonEmpty($('#flightEditorModal-destination').val()),
+                "TimeOut": nonEmpty($('#flightEditorModal-timeOut').val()),
+                "TimeOff": nonEmpty($('#flightEditorModal-timeOff').val()),
+                "TimeOn": nonEmpty($('#flightEditorModal-timeOn').val()),
+                "TimeIn": nonEmpty($('#flightEditorModal-timeIn').val()),
+                "Duration": nonEmpty($('#flightEditorModal-duration').val()),
+                "Distance": nonEmpty($('#flightEditorModal-distance').val()),
+                "Comment": nonEmpty($('#flightEditorModal-comment').val()),
+                "Remarks": nonEmpty($('#flightEditorModal-remarks').val())
+            };
+
+            $.ajax({
+                url: gatewayUrl,
+                method: 'POST',
+                dataType: 'json',
+                data: JSON.stringify(flight),
+                success: function (response) {
+                    alert('success');
+                },
+                error: function (e) {
+                    alert('error ' + e.responseText);
+                    console.log(e.responseText);
+                }
+            });
+
+        }
+
+        function nonEmpty(s) {
+            if (!s) {
+                return undefined;
+            }
+            if (s.trim().length === 0) {
+                return undefined;
+            }
+            return s;
         }
 
         function logbookRowStyle(row, index) {
@@ -155,7 +223,8 @@
 </div>
 
 
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -176,7 +245,8 @@
 </div>
 
 
-<div class="modal fade" id="flightInfoModal" tabindex="-1" role="dialog" aria-labelledby="flightInfoModalLabel" aria-hidden="true">
+<div class="modal fade" id="flightInfoModal" tabindex="-1" role="dialog" aria-labelledby="flightInfoModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -197,7 +267,8 @@
 </div>
 
 
-<div class="modal fade" id="flightEditorModal" tabindex="-1" role="dialog" aria-labelledby="flightEditorModalLabel" aria-hidden="true">
+<div class="modal fade" id="flightEditorModal" tabindex="-1" role="dialog" aria-labelledby="flightEditorModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -207,47 +278,48 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form>
+                <form id="flightEditorModal-form">
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-dateOfFlight">Date</label>
-                            <input type="text" class="form-control" id="flightEditorModal-dateOfFlight" placeholder="YYYY-MM-DD">
+                            <input type="text" class="form-control" id="flightEditorModal-dateOfFlight"
+                                   placeholder="YYYY-MM-DD" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-callsign">Callsign</label>
-                            <input type="text" class="form-control" id="flightEditorModal-callsign" placeholder="BAW1">
+                            <input type="text" class="form-control" id="flightEditorModal-callsign">
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-flightNumber">Flight Number</label>
-                            <input type="text" class="form-control" id="flightEditorModal-flightNumber" placeholder="BA001">
+                            <input type="text" class="form-control" id="flightEditorModal-flightNumber">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-aircraftType">Aircraft Type</label>
-                            <input type="text" class="form-control" id="flightEditorModal-aircraftType" placeholder="C172">
+                            <input type="text" class="form-control" id="flightEditorModal-aircraftType">
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-aircraftRegistration">Tail #</label>
-                            <input type="text" class="form-control" id="flightEditorModal-aircraftRegistration" placeholder="N172FS">
+                            <input type="text" class="form-control" id="flightEditorModal-aircraftRegistration">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-departure">Departure</label>
-                            <input type="text" class="form-control" id="flightEditorModal-departure" placeholder="EGLL">
+                            <input type="text" class="form-control" id="flightEditorModal-departure" required>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-destination">Destination</label>
-                            <input type="text" class="form-control" id="flightEditorModal-destination" placeholder="KJFK">
+                            <input type="text" class="form-control" id="flightEditorModal-destination" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label for="flightEditorModal-timeOut">Blocks Off</label>
-                            <input type="text" class="form-control" id="flightEditorModal-timeOut" placeholder="HH:MM">
+                            <input type="text" class="form-control" id="flightEditorModal-timeOut" placeholder="HH:MM" required>
                         </div>
                         <div class="form-group col-md-3">
                             <label for="flightEditorModal-timeOff">Takeoff</label>
@@ -259,27 +331,30 @@
                         </div>
                         <div class="form-group col-md-3">
                             <label for="flightEditorModal-timeIn">Blocks On</label>
-                            <input type="text" class="form-control" id="flightEditorModal-timeIn" placeholder="HH:MM">
+                            <input type="text" class="form-control" id="flightEditorModal-timeIn" placeholder="HH:MM" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-flightTime">Flight Time</label>
-                            <input type="text" class="form-control" id="flightEditorModal-flightTime" placeholder="HH:MM">
+                            <input type="text" class="form-control" id="flightEditorModal-flightTime"
+                                   placeholder="H:MM" required>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-airTime">Air Time</label>
-                            <input type="text" class="form-control" id="flightEditorModal-airTime" placeholder="HH:MM">
+                            <input type="text" class="form-control" id="flightEditorModal-airTime" placeholder="NOT SUPPORTED"
+                                   disabled>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="flightEditorModal-distance">Direct Distance, NM</label>
-                            <input type="text" class="form-control" id="flightEditorModal-distance" placeholder="123">
+                            <label for="flightEditorModal-crowFlightDistance">Direct Distance, NM</label>
+                            <input type="text" class="form-control" id="flightEditorModal-crowFlightDistance"
+                                   placeholder="NOT SUPPORTED" disabled>
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="flightEditorModal-distance1">Flown Distance, NM</label>
-                            <input type="text" class="form-control" id="flightEditorModal-distance1" placeholder="132">
+                            <label for="flightEditorModal-distance">Flown Distance, NM</label>
+                            <input type="text" class="form-control" id="flightEditorModal-distance" required>
                         </div>
                     </div>
                     <div class="form-group">
@@ -288,13 +363,13 @@
                     </div>
                     <div class="form-group">
                         <label for="flightEditorModal-remarks" class="col-form-label">Remarks</label>
-                        <input type="text" class="form-control" id="flightEditorModal-remarks" placeholder="">
+                        <input type="text" class="form-control" id="flightEditorModal-remarks">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary">Apply</button>
+                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="flightEditorModal_apply()">Apply</button>
             </div>
         </div>
     </div>
