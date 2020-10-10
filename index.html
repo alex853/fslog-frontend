@@ -69,6 +69,27 @@
             return result;
         }
 
+        function typeFormatter(value, row, index) {
+            var type = row['Type'];
+            var isTransfer = type === 'transfer';
+            var isDiscontinuity = type === 'discontinuity';
+            var isFlight = (type === 'flight') || (!isTransfer && !isDiscontinuity);
+
+            if (isFlight) {
+                return 'F';
+            }
+
+            if (isTransfer) {
+                return 'T';
+            }
+
+            if (isDiscontinuity) {
+                return 'D';
+            }
+
+            return '&nbsp;';
+        }
+
         function recordInfo(index) {
             $('#flightInfoModal').modal();
         }
@@ -113,9 +134,11 @@
                 return;
             }
 
+            $('#flightEditorModal').modal('hide');
+
             var flight = {
                 "UserID": 1,
-                "BeginningDT": $('#flightEditorModal-dateOfFlight').val() + 'T' + $('#flightEditorModal-timeOut').val(),
+                "BeginningDT": $('#flightEditorModal-dateOfFlight').val() + 'T' + $('#flightEditorModal-timeOut').val() + ':00',
                 "Type": "flight",
                 "Date": $('#flightEditorModal-dateOfFlight').val(),
                 "Callsign": nonEmpty($('#flightEditorModal-callsign').val()),
@@ -140,10 +163,11 @@
                 dataType: 'json',
                 data: JSON.stringify(flight),
                 success: function (response) {
-                    alert('success');
+                    showAlert("Flight added successfully", "success", 5000);
+                    // todo add flight to grid and update grid
                 },
                 error: function (e) {
-                    alert('error ' + e.responseText);
+                    showAlert("Error happened!", "danger", 5000);
                     console.log(e.responseText);
                 }
             });
@@ -179,6 +203,42 @@
             return {};
         }
 
+        function showAlert(message, type, closeDelay) {
+
+            var $cont = $("#alerts-container");
+
+            if ($cont.length == 0) {
+                // alerts-container does not exist, create it
+                $cont = $('<div id="alerts-container">')
+                    .css({
+                        position: "fixed"
+                        ,width: "50%"
+                        ,left: "25%"
+                        ,top: "10%"
+                    })
+                    .appendTo($("body"));
+            }
+
+            // default to alert-info; other options include success, warning, danger
+            type = type || "info";
+
+            // create the alert div
+            var alert = $('<div>')
+                .addClass("fade in show alert alert-" + type)
+                .append(
+                    $('<button type="button" class="close" data-dismiss="alert">')
+                        .append("&times;")
+                )
+                .append(message);
+
+            // add the alert div to top of alerts-container, use append() to add to bottom
+            $cont.prepend(alert);
+
+            // if closeDelay was passed - set a timeout to close the alert
+            if (closeDelay)
+                window.setTimeout(function() { alert.alert("close") }, closeDelay);
+        }
+
     </script>
 
     <style>
@@ -204,7 +264,7 @@
         <thead>
         <tr>
             <th data-field="Date" data-class="nobr">DOF</th>
-            <th data-field="Type">&nbsp;</th>
+            <th data-field="Type" data-formatter="typeFormatter">&nbsp;</th>
             <th data-field="AircraftType">Type</th>
             <th data-field="AircraftRegistration">Tail #</th>
             <th data-field="Departure">From</th>
@@ -336,8 +396,8 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="flightEditorModal-flightTime">Flight Time</label>
-                            <input type="text" class="form-control" id="flightEditorModal-flightTime"
+                            <label for="flightEditorModal-duration">Flight Time</label>
+                            <input type="text" class="form-control" id="flightEditorModal-duration"
                                    placeholder="H:MM" required>
                         </div>
                         <div class="form-group col-md-6">
