@@ -12,6 +12,7 @@
 
     <script>
         var gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
+        // var gatewayUrl = 'data.json';
 
         var records = undefined;
 
@@ -117,11 +118,19 @@
             dialog.modal();
         }
 
-        /*$(document).ready(function () {
+        $(document).ready(function () {
             $('#flightEditorModal-destination').keypress(function () {
                 $('#flightEditorModal-crowFlightDistance').val(Math.random());
             });
-        });*/
+
+            $('#flightEditorModal-timeOut').change(function () {
+                flightEditorModal_calculateDuration();
+            });
+
+            $('#flightEditorModal-timeIn').change(function () {
+                flightEditorModal_calculateDuration();
+            });
+        });
 
         function flightEditorModal_apply() {
             var dialog = $('#flightEditorModal');
@@ -172,6 +181,44 @@
                 }
             });
 
+        }
+
+        function flightEditorModal_calculateDuration() {
+            var timeOut = parseHHMM(nonEmpty($('#flightEditorModal-timeOut').val()));
+            var timeIn = parseHHMM(nonEmpty($('#flightEditorModal-timeIn').val()));
+
+            var durationStr = null;
+            if (timeOut !== undefined && timeIn !== undefined) {
+                var durationMinutes = timeIn['total'] - timeOut['total'];
+                if (durationMinutes < 0) {
+                    durationMinutes += 24*60;
+                }
+                var mm = durationMinutes % 60;
+                var h = (durationMinutes - mm) / 60;
+                durationStr = h + ':' + (mm < 10 ? '0' : '') + mm;
+            }
+            $('#flightEditorModal-duration').val(durationStr);
+        }
+
+        function parseHHMM(timeStr) {
+            if (timeStr === undefined) {
+                return undefined;
+            }
+            if (timeStr.length !== 5) {
+                return undefined;
+            }
+            var parts = timeStr.split(':');
+            var hhStr = parts[0];
+            var mmStr = parts[1];
+            if (hhStr.length !== 2 || mmStr.length !== 2) {
+                return undefined;
+            }
+            var hh = parseInt(hhStr);
+            var mm = parseInt(mmStr);
+            if (!(0 <= hh && hh <= 23) || !(0 <= mm && mm <= 59)) {
+                return undefined;
+            }
+            return { h: hh, m: mm, total: hh * 60 + mm };
         }
 
         function nonEmpty(s) {
@@ -398,7 +445,7 @@
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-duration">Flight Time</label>
                             <input type="text" class="form-control" id="flightEditorModal-duration"
-                                   placeholder="H:MM" required>
+                                   placeholder="H:MM" required disabled>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-airTime">Air Time</label>
