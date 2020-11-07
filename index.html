@@ -9,11 +9,12 @@
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/bootstrap-table.min.js"></script>
+    <script src="common.js"></script>
+    <script src="transfer-editor.js"></script>
 
     <script>
         var gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
-        var distanceUrl = 'http://simforge.net:7091';
-        // var gatewayUrl = 'data.json';
+        var distanceUrl = 'https://simforge.net:7091';
 
         var records = undefined;
 
@@ -63,7 +64,7 @@
             }
 
             if (isLast || isNextDiscontinuity) {
-                result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Transfer">+ Transfer</a>';
+                result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="TransferEditor.onAddClicked(' + index + ')" title="Add Transfer">+ Transfer</button>';
             }
 
             result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Discontinuity">+ Disc</a>';
@@ -215,42 +216,9 @@
                 if (durationMinutes < 0) {
                     durationMinutes += 24*60;
                 }
-                var mm = durationMinutes % 60;
-                var h = (durationMinutes - mm) / 60;
-                durationStr = h + ':' + (mm < 10 ? '0' : '') + mm;
+                durationStr = formatMinutesAsHMM(durationMinutes);
             }
             $('#flightEditorModal-duration').val(durationStr);
-        }
-
-        function parseHHMM(timeStr) {
-            if (timeStr === undefined) {
-                return undefined;
-            }
-            if (timeStr.length !== 5) {
-                return undefined;
-            }
-            var parts = timeStr.split(':');
-            var hhStr = parts[0];
-            var mmStr = parts[1];
-            if (hhStr.length !== 2 || mmStr.length !== 2) {
-                return undefined;
-            }
-            var hh = parseInt(hhStr);
-            var mm = parseInt(mmStr);
-            if (!(0 <= hh && hh <= 23) || !(0 <= mm && mm <= 59)) {
-                return undefined;
-            }
-            return { h: hh, m: mm, total: hh * 60 + mm };
-        }
-
-        function nonEmpty(s) {
-            if (!s) {
-                return undefined;
-            }
-            if (s.trim().length === 0) {
-                return undefined;
-            }
-            return s;
         }
 
         function logbookRowStyle(row, index) {
@@ -499,6 +467,89 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="flightEditorModal_apply()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="transferEditorModal" tabindex="-1" role="dialog" aria-labelledby="transferEditorModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferEditorModalLabel">[Transfer Editor]</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="transferEditorModal-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-date">Date</label>
+                            <input type="text" class="form-control" id="transferEditorModal-date"
+                                   placeholder="YYYY-MM-DD" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-departure">Departure</label>
+                            <input type="text" class="form-control" id="transferEditorModal-departure" style="text-transform: uppercase;" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-destination">Destination</label>
+                            <input type="text" class="form-control" id="transferEditorModal-destination" style="text-transform: uppercase;" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="transferEditorModal-timeOut">Time Out</label>
+                            <input type="text" class="form-control" id="transferEditorModal-timeOut" placeholder="HH:MM" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-method">Method</label>
+                            <div class="btn-group btn-group-toggle" id="transferEditorModal-method" data-toggle="buttons">
+                                <label class="btn btn-outline-primary">
+                                    <input type="radio" name="options" id="roads" autocomplete="off">Roads
+                                </label>
+                                <label class="btn btn-outline-success active">
+                                    <input type="radio" name="options" id="option2" autocomplete="off" checked>Flights
+                                </label>
+                                <label class="btn btn-outline-warning">
+                                    <input type="radio" name="options" id="option3" autocomplete="off">Mach3
+                                </label>
+                            </div>                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="transferEditorModal-timeIn">Time In</label>
+                            <input type="text" class="form-control" id="transferEditorModal-timeIn" placeholder="HH:MM" required disabled>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-crowFlightDistance">Direct Distance, NM</label>
+                            <input type="text" class="form-control" id="transferEditorModal-crowFlightDistance"
+                                   placeholder="N/A" disabled>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="transferEditorModal-duration">Transfer Time</label>
+                            <input type="text" class="form-control" id="transferEditorModal-duration"
+                                   placeholder="H:MM" required disabled>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="transferEditorModal-comment" class="col-form-label">Comment</label>
+                        <textarea class="form-control" id="transferEditorModal-comment"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="transferEditorModal-remarks" class="col-form-label">Remarks</label>
+                        <input type="text" class="form-control" id="transferEditorModal-remarks">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="TransferEditor.apply()">Apply</button>
             </div>
         </div>
     </div>
