@@ -46,7 +46,7 @@ var TransferEditor = {
         }
 
         var distance = parseInt(distanceStr, 10);
-        var method = "flights"; // todo method
+        var method = $("input[name='transferEditorModal-method']:checked").val();
 
         var speed;
         var minTime;
@@ -131,7 +131,7 @@ var TransferEditor = {
             "Destination": nonEmpty($('#transferEditorModal-destination').val()).toUpperCase(),
             "TimeOut": nonEmpty($('#transferEditorModal-timeOut').val()),
             "TimeIn": nonEmpty($('#transferEditorModal-timeIn').val()),
-            "Method": "flights", // todo method
+            "Method": $("input[name='transferEditorModal-method']:checked").val(),
             "Duration": nonEmpty($('#transferEditorModal-duration').val()),
             "Comment": nonEmpty($('#transferEditorModal-comment').val()),
             "Remarks": nonEmpty($('#transferEditorModal-remarks').val())
@@ -165,5 +165,9 @@ $(document).ready(function () {
 
     $('#transferEditorModal-timeOut').keyup(function () {
         TransferEditor.updateTimeIn();
+    });
+
+    $("input[name='transferEditorModal-method']").change(function () {
+        TransferEditor.updateDuration();
     });
 });
