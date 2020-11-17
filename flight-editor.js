@@ -9,7 +9,13 @@ var FlightEditor = {
 
         dialog.find('.modal-title').text('Add Flight');
 
-        $('#flightEditorModal-dateOfFlight').val(new Date().toISOString().split('T')[0]);
+        var isLast = index === records.length - 1;
+
+        if (isLast) {
+            $('#flightEditorModal-dateOfFlight').val(new Date().toISOString().split('T')[0]);
+        } else {
+            $('#flightEditorModal-dateOfFlight').val(undefined);
+        }
         $('#flightEditorModal-callsign').val(isPreviousFlight ? previousRecord['Callsign'] : undefined);
         $('#flightEditorModal-flightNumber').val(isPreviousFlight ? previousRecord['FlightNumber'] : undefined);
         $('#flightEditorModal-aircraftType').val(isPreviousFlight ? previousRecord['AircraftType'] : undefined);

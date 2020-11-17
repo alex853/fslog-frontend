@@ -50,12 +50,16 @@ function nonEmptyUpperCase(s) {
 }
 
 var RecordType = {
+    isFlight: function (type) {
+        return (type !== 'transfer') && (type !== 'discontinuity');
+    },
+
     isTransfer: function (type) {
         return type === 'transfer';
     },
 
-    isFlight: function (type) {
-        return (type !== 'transfer') && (type !== 'discontinuity');
+    isDiscontinuity: function (type) {
+        return type === 'discontinuity';
     },
 
     isFlightOrTransfer: function (type) {

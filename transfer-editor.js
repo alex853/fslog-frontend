@@ -7,7 +7,13 @@ var TransferEditor = {
 
         dialog.find('.modal-title').text('Add Transfer');
 
-        $('#transferEditorModal-date').val(new Date().toISOString().split('T')[0]); // todo do not set current date if it is not going to add the last row
+        var isLast = index === records.length - 1;
+
+        if (isLast) {
+            $('#transferEditorModal-date').val(new Date().toISOString().split('T')[0]);
+        } else {
+            $('#transferEditorModal-date').val(undefined);
+        }
         if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
             $('#transferEditorModal-departure').val(previousRecord['Destination']);
             $('#transferEditorModal-departure').prop('disabled', true);
