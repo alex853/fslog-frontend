@@ -2,17 +2,19 @@ var TransferEditor = {
     onAddClicked: function (index) {
         var previousRecord = records[index];
 
-        var type = previousRecord['Type'];
-        var isPreviousTransfer = type === 'transfer';
-        var isPreviousFlight = (type !== 'transfer') && (type !== 'discontinuity');
-
         var dialog = $('#transferEditorModal');
         dialog.action = 'add-transfer';
 
         dialog.find('.modal-title').text('Add Transfer');
 
         $('#transferEditorModal-date').val(new Date().toISOString().split('T')[0]); // todo do not set current date if it is not going to add the last row
-        $('#transferEditorModal-departure').val(isPreviousFlight || isPreviousTransfer ? previousRecord['Destination'] : undefined);
+        if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
+            $('#transferEditorModal-departure').val(previousRecord['Destination']);
+            $('#transferEditorModal-departure').prop('disabled', true);
+        } else {
+            $('#transferEditorModal-departure').val(undefined);
+            $('#transferEditorModal-departure').prop('disabled', false);
+        }
         $('#transferEditorModal-destination').val(undefined);
 
         dialog.modal();

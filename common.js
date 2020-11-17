@@ -48,3 +48,17 @@ function nonEmptyUpperCase(s) {
     }
     return s.toUpperCase;
 }
+
+var RecordType = {
+    isTransfer: function (type) {
+        return type === 'transfer';
+    },
+
+    isFlight: function (type) {
+        return (type !== 'transfer') && (type !== 'discontinuity');
+    },
+
+    isFlightOrTransfer: function (type) {
+        return this.isFlight(type) || this.isTransfer(type);
+    }
+}

@@ -2,9 +2,7 @@ var FlightEditor = {
     onAddClicked: function (index) {
         var previousRecord = records[index];
 
-        var type = previousRecord['Type'];
-        var isPreviousTransfer = type === 'transfer';
-        var isPreviousFlight = (type !== 'transfer') && (type !== 'discontinuity');
+        var isPreviousFlight = RecordType.isFlight(previousRecord['Type']);
 
         var dialog = $('#flightEditorModal');
         dialog.action = 'add-flight';
@@ -16,7 +14,13 @@ var FlightEditor = {
         $('#flightEditorModal-flightNumber').val(isPreviousFlight ? previousRecord['FlightNumber'] : undefined);
         $('#flightEditorModal-aircraftType').val(isPreviousFlight ? previousRecord['AircraftType'] : undefined);
         $('#flightEditorModal-aircraftRegistration').val(isPreviousFlight ? previousRecord['AircraftRegistration'] : undefined);
-        $('#flightEditorModal-departure').val(isPreviousFlight || isPreviousTransfer ? previousRecord['Destination'] : undefined);
+        if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
+            $('#flightEditorModal-departure').val(previousRecord['Destination']);
+            $('#flightEditorModal-departure').prop('disabled', true);
+        } else {
+            $('#flightEditorModal-departure').val(undefined);
+            $('#flightEditorModal-departure').prop('disabled', false);
+        }
         $('#flightEditorModal-destination').val(undefined);
 
         dialog.modal();
