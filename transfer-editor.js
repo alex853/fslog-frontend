@@ -119,7 +119,7 @@ var TransferEditor = {
             return;
         }
 
-        $('#transferEditorModal').modal('hide');
+        dialog.modal('hide');
 
         var transfer = {
             "UserID": 1,
