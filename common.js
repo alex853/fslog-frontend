@@ -38,3 +38,13 @@ function nonEmpty(s) {
     }
     return s;
 }
+
+function nonEmptyUpperCase(s) {
+    if (!s) {
+        return undefined;
+    }
+    if (s.trim().length === 0) {
+        return undefined;
+    }
+    return s.toUpperCase;
+}
