@@ -87,8 +87,8 @@ var FlightEditor = {
             "FlightNumber": nonEmptyUpperCase($('#flightEditorModal-flightNumber').val()),
             "AircraftType": nonEmptyUpperCase($('#flightEditorModal-aircraftType').val()),
             "AircraftRegistration": nonEmptyUpperCase($('#flightEditorModal-aircraftRegistration').val()),
-            "Departure": nonEmpty($('#flightEditorModal-departure').val()),
-            "Destination": nonEmpty($('#flightEditorModal-destination').val()),
+            "Departure": nonEmptyUpperCase($('#flightEditorModal-departure').val()),
+            "Destination": nonEmptyUpperCase($('#flightEditorModal-destination').val()),
             "TimeOut": nonEmpty($('#flightEditorModal-timeOut').val()),
             "TimeOff": nonEmpty($('#flightEditorModal-timeOff').val()),
             "TimeOn": nonEmpty($('#flightEditorModal-timeOn').val()),
@@ -109,7 +109,7 @@ var FlightEditor = {
                 // todo add flight to grid and update grid
             },
             error: function (e) {
-                showAlert("Error happened!", "danger", 5000);
+                showAlert("Error happened!", "danger", 15000);
                 console.log(e.responseText);
             }
         });

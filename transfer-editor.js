@@ -155,7 +155,7 @@ var TransferEditor = {
                 // todo add transfer to grid and update grid
             },
             error: function (e) {
-                showAlert("Error happened!", "danger", 5000);
+                showAlert("Error happened!", "danger", 15000);
                 console.log(e.responseText);
             }
         });

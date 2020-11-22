@@ -46,7 +46,7 @@ function nonEmptyUpperCase(s) {
     if (s.trim().length === 0) {
         return undefined;
     }
-    return s.toUpperCase;
+    return s.toUpperCase();
 }
 
 var RecordType = {

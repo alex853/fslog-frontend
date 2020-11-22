@@ -12,6 +12,7 @@
     <script src="common.js"></script>
     <script src="flight-editor.js"></script>
     <script src="transfer-editor.js"></script>
+    <script src="discontinuity-editor.js"></script>
 
     <script>
         var gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
@@ -62,7 +63,7 @@
                 result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="TransferEditor.onAddClicked(' + index + ')" title="Add Transfer">+ Transfer</button>';
             }
 
-            result += ' <a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')" title="Add Discontinuity">+ Disc</a>';
+            result += ' <button class="btn btn-outline-info btn-sm" onclick="DiscontinuityEditor.onAddClicked(' + index + ')" title="Add Discontinuity">+ Disc</button>';
 
             return result;
         }
@@ -421,6 +422,50 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="TransferEditor.apply()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="discontinuityEditorModal" tabindex="-1" role="dialog" aria-labelledby="discontinuityEditorModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="discontinuityEditorModalLabel">[Discontinuity Editor]</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="discontinuityEditorModal-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="discontinuityEditorModal-date">Date</label>
+                            <input type="text" class="form-control" id="discontinuityEditorModal-date"
+                                   placeholder="YYYY-MM-DD" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="discontinuityEditorModal-time">Time</label>
+                            <input type="text" class="form-control" id="discontinuityEditorModal-time" placeholder="HH:MM" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="discontinuityEditorModal-comment" class="col-form-label">Comment</label>
+                        <textarea class="form-control" id="discontinuityEditorModal-comment"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="discontinuityEditorModal-remarks" class="col-form-label">Remarks</label>
+                        <input type="text" class="form-control" id="discontinuityEditorModal-remarks">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="DiscontinuityEditor.apply()">Apply</button>
             </div>
         </div>
     </div>
