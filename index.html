@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
     <script src="js/jquery-3.3.1.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+<!--    <script src="js/bootstrap.min.js"></script>-->
     <script src="js/bootstrap-table.min.js"></script>
     <script src="common.js"></script>
     <script src="flight-editor.js"></script>
@@ -49,25 +50,32 @@
         function actionsCellFormatter(value, row, index) {
             // var result = '<a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')">Info</a>';
 
-            var result = '<button type="button" class="btn btn-outline-info btn-sm" onclick="recordInfo(' + index + ')">Info</button>';
+            var result = '<div class="btn-group" role="group">'
+                + '<button id="actionsButtonGroup_' + index +'" type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#</button>'
+                + '<div class="dropdown-menu" aria-labelledby="actionsButtonGroup_' + index + '">';
+
+            // result += '<button type="button" class="btn btn-outline-info btn-sm" onclick="recordInfo(' + index + ')">Info</button>';
 
             var isLast = index === records.length - 1;
 
             var isNextDiscontinuity = !isLast && RecordType.isDiscontinuity(records[index + 1].Type);
 
             if (isLast || isNextDiscontinuity) {
-                result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="FlightEditor.onAddClicked(' + index + ')" title="Add Flight">+ Flight</button>';
+                result += '<a class="dropdown-item" href="#" onclick="FlightEditor.onAddClicked(' + index + ')">Add Flight</a>';
             }
 
             if (isLast || isNextDiscontinuity) {
-                result += ' <button type="button" class="btn btn-outline-info btn-sm" onclick="TransferEditor.onAddClicked(' + index + ')" title="Add Transfer">+ Transfer</button>';
+                result += '<a class="dropdown-item" href="#" onclick="TransferEditor.onAddClicked(' + index + ')">Add Transfer</a>';
             }
 
-            result += ' <button class="btn btn-outline-info btn-sm" onclick="DiscontinuityEditor.onAddClicked(' + index + ')" title="Add Discontinuity">+ Disc</button>';
+            result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onAddClicked(' + index + ')">Add Discontinuity</a>';
 
             if (RecordType.isDiscontinuity(row['Type'])) {
-                result += ' <button class="btn btn-outline-info btn-sm" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')" title="Delete Discontinuity">- Disc</button>';
+                result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')">Remove Discontinuity</a>';
             }
+
+            result += '</div>'
+                + '</div>';
 
             return result;
         }
