@@ -18,6 +18,41 @@ var DiscontinuityEditor = {
         dialog.modal();
     },
 
+    onDeleteClicked: function (index) {
+        var previousRecord = records[index - 1];
+        var record = records[index];
+        var nextRecord = records[index + 1];
+
+        var result = Checks.checkCompatibility(new Record(previousRecord), new Record(nextRecord));
+        if (!result.success) {
+            alert('Unable to remove the discontinuity record due to conditions'); // todo explanation dialog
+            return;
+        }
+
+        var confirmed = confirm('Please confirm that the discontinuity record should be deleted'); // todo confirmation dialog
+        if (!confirmed) {
+            return;
+        }
+
+        $.ajax({
+            url: gatewayUrl,
+            method: 'DELETE',
+            dataType: 'json',
+            data: JSON.stringify({
+                "UserID": record["UserID"],
+                "BeginningDT": record["BeginningDT"]
+            }),
+            success: function (response) {
+                showAlert("Discontinuity removed successfully", "success", 5000);
+                // todo update grid
+            },
+            error: function (e) {
+                showAlert("Error happened!", "danger", 15000);
+                console.log(e.responseText);
+            }
+        });
+    },
+
     apply: function () {
         var dialog = $('#discontinuityEditorModal');
         var action = dialog.action;
@@ -48,7 +83,7 @@ var DiscontinuityEditor = {
             data: JSON.stringify(transfer),
             success: function (response) {
                 showAlert("Discontinuity added successfully", "success", 5000);
-                // todo add transfer to grid and update grid
+                // todo update grid
             },
             error: function (e) {
                 showAlert("Error happened!", "danger", 15000);

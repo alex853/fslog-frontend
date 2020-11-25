@@ -65,6 +65,10 @@
 
             result += ' <button class="btn btn-outline-info btn-sm" onclick="DiscontinuityEditor.onAddClicked(' + index + ')" title="Add Discontinuity">+ Disc</button>';
 
+            if (RecordType.isDiscontinuity(row['Type'])) {
+                result += ' <button class="btn btn-outline-info btn-sm" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')" title="Delete Discontinuity">- Disc</button>';
+            }
+
             return result;
         }
 

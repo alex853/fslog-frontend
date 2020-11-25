@@ -55,7 +55,7 @@ var FlightEditor = {
 
         var durationStr = null;
         if (timeOut !== undefined && timeIn !== undefined) {
-            var durationMinutes = timeIn['total'] - timeOut['total'];
+            var durationMinutes = timeIn['total'] - timeOut['total'];  // todo code duplication
             if (durationMinutes < 0) {
                 durationMinutes += 24 * 60;
             }
