@@ -34,7 +34,7 @@
                         data: records
                     });
                     $('#logbook').bootstrapTable('resetView', {
-                        height: $('#logbook').height() + records.length * 2
+                        height: Math.max($('#logbook').height() + records.length * 2, window.innerHeight)
                     });
                 },
                 error: function (e) {
@@ -43,8 +43,76 @@
             });
         });
 
-        function pilotFlightsPageLink(value) {
-            return '<a href="pilot-flights.html?pilotNumber=' + value + '">' + value + '</a>';
+        function logbookRowStyle(row, index) {
+            var type = row.Type;
+            if (RecordType.isTransfer(type)) {
+                return {
+                    css: {
+                        'background-color': '#F0FFFF'
+                    }
+                }
+            } else if (RecordType.isDiscontinuity(type)) {
+                return {
+                    css: {
+                        'background-color': '#FFFFF0'
+                    }
+                }
+            }
+
+            return {};
+        }
+
+        function typeFormatter(value, row, index) {
+            var type = row['Type'];
+            var isTransfer = RecordType.isTransfer(type);
+            var isDiscontinuity = RecordType.isDiscontinuity(type);
+            var isFlight = RecordType.isFlight(type);
+
+            if (isFlight) {
+                return 'F';
+            }
+
+            if (isTransfer) {
+                return 'T';
+            }
+
+            if (isDiscontinuity) {
+                return 'D';
+            }
+
+            return '&nbsp;';
+        }
+
+        function aircraftTypeFormatter(value, row, index) {
+            return flightField(row, "AircraftType");
+        }
+
+        function aircraftRegistrationFormatter(value, row, index) {
+            return flightField(row, "AircraftRegistration");
+        }
+
+        function departureFormatter(value, row, index) {
+            return flightOrTransferField(row, "Departure");
+        }
+
+        function destinationFormatter(value, row, index) {
+            return flightOrTransferField(row, "Destination");
+        }
+
+        function timeOutFormatter(value, row, index) {
+            return flightOrTransferField(row, "TimeOut");
+        }
+
+        function timeInFormatter(value, row, index) {
+            return flightOrTransferField(row, "TimeIn");
+        }
+
+        function totalTimeFormatter(value, row, index) {
+            return flightField(row, "TotalTime");
+        }
+
+        function distanceFormatter(value, row, index) {
+            return flightField(row, "Distance");
         }
 
         function actionsCellFormatter(value, row, index) {
@@ -82,84 +150,26 @@
             return result;
         }
 
-        function typeFormatter(value, row, index) {
-            var type = row['Type'];
-            var isTransfer = RecordType.isTransfer(type);
-            var isDiscontinuity = RecordType.isDiscontinuity(type);
-            var isFlight = RecordType.isFlight(type);
-
-            if (isFlight) {
-                return 'F';
+        function flightField(record, fieldName) {
+            if (record.Flight) {
+                return record.Flight[fieldName];
+            } else {
+                return null;
             }
+        }
 
-            if (isTransfer) {
-                return 'T';
+        function flightOrTransferField(record, fieldName) {
+            if (record.Flight) {
+                return record.Flight[fieldName];
+            } else if (record.Transfer) {
+                return record.Transfer[fieldName];
+            } else {
+                return null;
             }
-
-            if (isDiscontinuity) {
-                return 'D';
-            }
-
-            return '&nbsp;';
         }
 
         function recordInfo(index) {
             $('#flightInfoModal').modal();
-        }
-
-        function logbookRowStyle(row, index) {
-            var type = row.Type;
-            if (RecordType.isTransfer(type)) {
-                return {
-                    css: {
-                        'background-color': '#F0FFFF'
-                    }
-                }
-            } else if (RecordType.isDiscontinuity(type)) {
-                return {
-                    css: {
-                        'background-color': '#FFFFF0'
-                    }
-                }
-            }
-
-            return {};
-        }
-
-        function showAlert(message, type, closeDelay) {
-
-            var $cont = $("#alerts-container");
-
-            if ($cont.length == 0) {
-                // alerts-container does not exist, create it
-                $cont = $('<div id="alerts-container">')
-                    .css({
-                        position: "fixed"
-                        ,width: "50%"
-                        ,left: "25%"
-                        ,top: "10%"
-                    })
-                    .appendTo($("body"));
-            }
-
-            // default to alert-info; other options include success, warning, danger
-            type = type || "info";
-
-            // create the alert div
-            var alert = $('<div>')
-                .addClass("fade in show alert alert-" + type)
-                .append(
-                    $('<button type="button" class="close" data-dismiss="alert">')
-                        .append("&times;")
-                )
-                .append(message);
-
-            // add the alert div to top of alerts-container, use append() to add to bottom
-            $cont.prepend(alert);
-
-            // if closeDelay was passed - set a timeout to close the alert
-            if (closeDelay)
-                window.setTimeout(function() { alert.alert("close") }, closeDelay);
         }
 
     </script>
@@ -188,15 +198,16 @@
         <tr>
             <th data-field="Date" data-class="nobr">DOF</th>
             <th data-field="Type" data-formatter="typeFormatter">&nbsp;</th>
-            <th data-field="AircraftType">Type</th>
-            <th data-field="AircraftRegistration">Tail #</th>
-            <th data-field="Departure">From</th>
-            <th data-field="Destination">To</th>
-            <th data-field="TimeOut">Time<br>Out</th>
-            <th data-field="TimeIn">Time<br>In</th>
-            <th data-field="Duration">Flight<br>Time</th>
-            <th data-field="Distance">Distance</th>
+            <th data-field="AircraftType" data-formatter="aircraftTypeFormatter">Type</th>
+            <th data-field="AircraftRegistration" data-formatter="aircraftRegistrationFormatter">Tail #</th>
+            <th data-field="Departure" data-formatter="departureFormatter">From</th>
+            <th data-field="Destination" data-formatter="destinationFormatter">To</th>
+            <th data-field="TimeOut" data-formatter="timeOutFormatter">Time<br>Out</th>
+            <th data-field="TimeIn" data-formatter="timeInFormatter">Time<br>In</th>
+            <th data-field="TotalTime" data-formatter="totalTimeFormatter">Total<br>Time</th>
+            <th data-field="Distance" data-formatter="distanceFormatter">Distance</th>
             <th data-field="Comment">Comment</th>
+            <th data-field="Remarks">Remarks</th>
             <th data-formatter="actionsCellFormatter"></th>
         </tr>
         </thead>
