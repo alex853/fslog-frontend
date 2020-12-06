@@ -16,12 +16,15 @@ var FlightEditor = {
         } else {
             $('#flightEditorModal-dateOfFlight').val(undefined);
         }
-        $('#flightEditorModal-callsign').val(isPreviousFlight ? previousRecord['Callsign'] : undefined);
-        $('#flightEditorModal-flightNumber').val(isPreviousFlight ? previousRecord['FlightNumber'] : undefined);
-        $('#flightEditorModal-aircraftType').val(isPreviousFlight ? previousRecord['AircraftType'] : undefined);
-        $('#flightEditorModal-aircraftRegistration').val(isPreviousFlight ? previousRecord['AircraftRegistration'] : undefined);
+        $('#flightEditorModal-callsign').val(isPreviousFlight ? previousRecord.Flight.Callsign : undefined);
+        $('#flightEditorModal-flightNumber').val(isPreviousFlight ? previousRecord.Flight.FlightNumber : undefined);
+        $('#flightEditorModal-aircraftType').val(isPreviousFlight ? previousRecord.Flight.AircraftType : undefined);
+        $('#flightEditorModal-aircraftRegistration').val(isPreviousFlight ? previousRecord.Flight.AircraftRegistration : undefined);
         if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
-            $('#flightEditorModal-departure').val(previousRecord['Destination']);
+            $('#flightEditorModal-departure').val(
+                RecordType.isFlight(previousRecord['Type'])
+                    ? previousRecord.Flight.Destination
+                    : previousRecord.Transfer.Destination);
             $('#flightEditorModal-departure').prop('disabled', true);
         } else {
             $('#flightEditorModal-departure').val(undefined);
@@ -64,7 +67,6 @@ var FlightEditor = {
         $('#flightEditorModal-duration').val(durationStr);
     },
 
-
     apply: function () {
         var dialog = $('#flightEditorModal');
         var action = dialog.action;
@@ -79,22 +81,26 @@ var FlightEditor = {
         dialog.modal('hide');
 
         var flight = {
-            "UserID": 1,
-            "BeginningDT": $('#flightEditorModal-dateOfFlight').val() + 'T' + $('#flightEditorModal-timeOut').val() + ':00',
+            "UserID": myUserId,
+            "BeginningDT": $('#flightEditorModal-dateOfFlight').val() + 'T' + $('#flightEditorModal-timeOut').val(),
+            "RecordID": generateUUID(),
             "Type": "flight",
             "Date": $('#flightEditorModal-dateOfFlight').val(),
-            "Callsign": nonEmptyUpperCase($('#flightEditorModal-callsign').val()),
-            "FlightNumber": nonEmptyUpperCase($('#flightEditorModal-flightNumber').val()),
-            "AircraftType": nonEmptyUpperCase($('#flightEditorModal-aircraftType').val()),
-            "AircraftRegistration": nonEmptyUpperCase($('#flightEditorModal-aircraftRegistration').val()),
-            "Departure": nonEmptyUpperCase($('#flightEditorModal-departure').val()),
-            "Destination": nonEmptyUpperCase($('#flightEditorModal-destination').val()),
-            "TimeOut": nonEmpty($('#flightEditorModal-timeOut').val()),
-            "TimeOff": nonEmpty($('#flightEditorModal-timeOff').val()),
-            "TimeOn": nonEmpty($('#flightEditorModal-timeOn').val()),
-            "TimeIn": nonEmpty($('#flightEditorModal-timeIn').val()),
-            "Duration": nonEmpty($('#flightEditorModal-duration').val()),
-            "Distance": nonEmpty($('#flightEditorModal-distance').val()),
+            "Flight": {
+                "Callsign": nonEmptyUpperCase($('#flightEditorModal-callsign').val()),
+                "FlightNumber": nonEmptyUpperCase($('#flightEditorModal-flightNumber').val()),
+                "AircraftType": nonEmptyUpperCase($('#flightEditorModal-aircraftType').val()),
+                "AircraftRegistration": nonEmptyUpperCase($('#flightEditorModal-aircraftRegistration').val()),
+                "Departure": nonEmptyUpperCase($('#flightEditorModal-departure').val()),
+                "Destination": nonEmptyUpperCase($('#flightEditorModal-destination').val()),
+                "TimeOut": nonEmpty($('#flightEditorModal-timeOut').val()),
+                "TimeOff": nonEmpty($('#flightEditorModal-timeOff').val()),
+                "TimeOn": nonEmpty($('#flightEditorModal-timeOn').val()),
+                "TimeIn": nonEmpty($('#flightEditorModal-timeIn').val()),
+                "Distance": nonEmpty($('#flightEditorModal-distance').val()),
+                "TotalTime": nonEmpty($('#flightEditorModal-duration').val()),
+                // todo "AirTime": nonEmpty($('#flightEditorModal-duration').val())
+            },
             "Comment": nonEmpty($('#flightEditorModal-comment').val()),
             "Remarks": nonEmpty($('#flightEditorModal-remarks').val())
         };

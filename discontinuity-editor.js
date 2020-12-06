@@ -67,11 +67,14 @@ var DiscontinuityEditor = {
         dialog.modal('hide');
 
         var transfer = {
-            "UserID": 1,
-            "BeginningDT": $('#discontinuityEditorModal-date').val() + 'T' + $('#discontinuityEditorModal-time').val() + ':00',
+            "UserID": myUserId,
+            "BeginningDT": $('#discontinuityEditorModal-date').val() + 'T' + $('#discontinuityEditorModal-time').val(),
+            "RecordID": generateUUID(),
             "Type": "discontinuity",
             "Date": $('#discontinuityEditorModal-date').val(),
-            "Time": nonEmpty($('#discontinuityEditorModal-time').val()),
+            "Discontinuity": {
+                "Time": nonEmpty($('#discontinuityEditorModal-time').val())
+            },
             "Comment": nonEmpty($('#discontinuityEditorModal-comment').val()),
             "Remarks": nonEmpty($('#discontinuityEditorModal-remarks').val())
         };

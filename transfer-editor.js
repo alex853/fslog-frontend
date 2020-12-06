@@ -15,7 +15,10 @@ var TransferEditor = {
             $('#transferEditorModal-date').val(undefined);
         }
         if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
-            $('#transferEditorModal-departure').val(previousRecord['Destination']);
+            $('#transferEditorModal-departure').val(
+                RecordType.isFlight(previousRecord['Type'])
+                    ? previousRecord.Flight.Destination
+                    : previousRecord.Transfer.Destination);
             $('#transferEditorModal-departure').prop('disabled', true);
         } else {
             $('#transferEditorModal-departure').val(undefined);
@@ -130,17 +133,18 @@ var TransferEditor = {
         dialog.modal('hide');
 
         var transfer = {
-            "UserID": 1,
-            "BeginningDT": $('#transferEditorModal-date').val() + 'T' + $('#transferEditorModal-timeOut').val() + ':00',
+            "UserID": myUserId,
+            "BeginningDT": $('#transferEditorModal-date').val() + 'T' + $('#transferEditorModal-timeOut').val(),
+            "RecordID": generateUUID(),
             "Type": "transfer",
-            "Status": "done",
             "Date": $('#transferEditorModal-date').val(),
-            "Departure": nonEmptyUpperCase($('#transferEditorModal-departure').val()),
-            "Destination": nonEmptyUpperCase($('#transferEditorModal-destination').val()),
-            "TimeOut": nonEmpty($('#transferEditorModal-timeOut').val()),
-            "TimeIn": nonEmpty($('#transferEditorModal-timeIn').val()),
-            "Method": $("input[name='transferEditorModal-method']:checked").val(),
-            "Duration": nonEmpty($('#transferEditorModal-duration').val()),
+            "Transfer": {
+                "Departure": nonEmptyUpperCase($('#transferEditorModal-departure').val()),
+                "Destination": nonEmptyUpperCase($('#transferEditorModal-destination').val()),
+                "TimeOut": nonEmpty($('#transferEditorModal-timeOut').val()),
+                "TimeIn": nonEmpty($('#transferEditorModal-timeIn').val()),
+                "Method": $("input[name='transferEditorModal-method']:checked").val()
+            },
             "Comment": nonEmpty($('#transferEditorModal-comment').val()),
             "Remarks": nonEmpty($('#transferEditorModal-remarks').val())
         };
