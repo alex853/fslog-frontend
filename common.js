@@ -1,4 +1,3 @@
-
 var myUserId = "afe78778-39d3-494d-b366-e696e75b96a4";
 
 function parseHHMM(timeStr) {
