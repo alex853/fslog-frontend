@@ -116,8 +116,6 @@
         }
 
         function actionsCellFormatter(value, row, index) {
-            // var result = '<a class="btn btn-outline-info btn-sm" href="javascript:alert(\'not implemented\')">Info</a>';
-
             var result = '<div class="btn-group" role="group">'
                 + '<button id="actionsButtonGroup_' + index +'" type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#</button>'
                 + '<div class="dropdown-menu" aria-labelledby="actionsButtonGroup_' + index + '">';
@@ -125,7 +123,7 @@
             var isLast = index === records.length - 1;
 
             // current row actions
-            result += '<a class="dropdown-item" href="#" onclick="recordInfo(' + index + ')">Details</a>';
+            result += '<a class="dropdown-item" href="#" onclick="openDetails(' + index + ')">Details</a>';
             if (RecordType.isDiscontinuity(row['Type'])) {
                 result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')">Delete</a>';
             }
@@ -168,8 +166,13 @@
             }
         }
 
-        function recordInfo(index) {
-            $('#flightInfoModal').modal();
+        function openDetails(index) {
+            var record = new Record(records[index]);
+            if (record.isFlight()) {
+                FlightEditor.onDetailsClicked(index);
+            } else {
+                alert('not implemented for this type or record');
+            }
         }
 
     </script>
@@ -239,30 +242,8 @@
 </div>
 
 
-<div class="modal fade" id="flightInfoModal" tabindex="-1" role="dialog" aria-labelledby="flightInfoModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="flightInfoLabel">Flight Info bla-bla-bla</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                BLA-BLA-BLA
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary">Edit</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <div class="modal fade" id="flightEditorModal" tabindex="-1" role="dialog" aria-labelledby="flightEditorModalLabel"
-     aria-hidden="true">
+     aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -330,20 +311,20 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="flightEditorModal-duration">Flight Time</label>
-                            <input type="text" class="form-control" id="flightEditorModal-duration"
+                            <label for="flightEditorModal-duration">Total Time</label>
+                            <input type="text" class="form-control-plaintext" id="flightEditorModal-duration"
                                    placeholder="H:MM" required disabled>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-airTime">Air Time</label>
-                            <input type="text" class="form-control" id="flightEditorModal-airTime" placeholder="NOT SUPPORTED"
-                                   disabled>
+                            <input type="text" class="form-control-plaintext" id="flightEditorModal-airTime"
+                                   placeholder="H:MM" disabled>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="flightEditorModal-crowFlightDistance">Direct Distance, NM</label>
-                            <input type="text" class="form-control" id="flightEditorModal-crowFlightDistance"
+                            <input type="text" class="form-control-plaintext" id="flightEditorModal-crowFlightDistance"
                                    placeholder="N/A" disabled>
                         </div>
                         <div class="form-group col-md-6">
@@ -362,8 +343,9 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="FlightEditor.apply()">Apply</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning d-none" id="flightEditorModal-editButton" onclick="FlightEditor.edit()">Edit</button>
+                <button type="button" class="btn btn-primary" id="flightEditorModal-applyButton" onclick="FlightEditor.apply()">Apply</button>
             </div>
         </div>
     </div>
@@ -371,7 +353,7 @@
 
 
 <div class="modal fade" id="transferEditorModal" tabindex="-1" role="dialog" aria-labelledby="transferEditorModalLabel"
-     aria-hidden="true">
+     aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -445,7 +427,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="TransferEditor.apply()">Apply</button>
             </div>
         </div>
@@ -454,7 +436,7 @@
 
 
 <div class="modal fade" id="discontinuityEditorModal" tabindex="-1" role="dialog" aria-labelledby="discontinuityEditorModalLabel"
-     aria-hidden="true">
+     aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -489,7 +471,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="alert('not implemented')">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="DiscontinuityEditor.apply()">Apply</button>
             </div>
         </div>

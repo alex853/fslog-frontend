@@ -40,6 +40,16 @@ function nonEmpty(s) {
     return s;
 }
 
+function nonEmptyInt(s) {
+    if (!s) {
+        return undefined;
+    }
+    if (s.trim().length === 0) {
+        return undefined;
+    }
+    return parseInt(s);
+}
+
 function nonEmptyUpperCase(s) {
     if (!s) {
         return undefined;
@@ -101,6 +111,22 @@ function generateUUID() { // Public Domain/MIT
     });
 }
 
+function disableField(field) {
+    return field.prop('disabled', true).addClass('form-control-plaintext').removeClass('form-control');
+}
+
+function enableField(field) {
+    return field.prop('disabled', false).addClass('form-control').removeClass('form-control-plaintext');
+}
+
+function hideButton(button) {
+    return button.addClass('d-none');
+}
+
+function showButton(button) {
+    return button.removeClass('d-none');
+}
+
 var RecordType = {
     isFlight: function (type) {
         return (type !== 'transfer') && (type !== 'discontinuity');
@@ -122,6 +148,42 @@ var RecordType = {
 class Record {
     constructor(record) {
         this.record = record;
+    }
+
+    get date() {
+        return this.record.Date;
+    }
+
+    get callsign() {
+        if (this.isFlight()) {
+            return this.record.Flight.Callsign;
+        } else {
+            throw new Error('Callsign is not available');
+        }
+    }
+
+    get flightNumber() {
+        if (this.isFlight()) {
+            return this.record.Flight.FlightNumber;
+        } else {
+            throw new Error('FlightNumber is not available');
+        }
+    }
+
+    get aircraftType() {
+        if (this.isFlight()) {
+            return this.record.Flight.AircraftType;
+        } else {
+            throw new Error('AircraftType is not available');
+        }
+    }
+
+    get aircraftRegistration() {
+        if (this.isFlight()) {
+            return this.record.Flight.AircraftRegistration;
+        } else {
+            throw new Error('AircraftRegistration is not available');
+        }
     }
 
     get range() {
@@ -152,19 +214,91 @@ class Record {
     }
 
     get departure() {
-        if (this.isFlight() || this.isTransfer()) {
-            return this.record['Departure'];
+        if (this.isFlight()) {
+            return this.record.Flight.Departure;
+        } else if (this.isTransfer()) {
+            return this.record.Transfer.Departure;
         } else {
             throw new Error('Departure is not available');
         }
     }
 
     get destination() {
-        if (this.isFlight() || this.isTransfer()) {
-            return this.record['Destination'];
+        if (this.isFlight()) {
+            return this.record.Flight.Destination;
+        } else if (this.isTransfer()) {
+            return this.record.Transfer.Destination;
         } else {
             throw new Error('Destination is not available');
         }
+    }
+
+    get timeOut() {
+        if (this.isFlight()) {
+            return this.record.Flight.TimeOut;
+        } else if (this.isTransfer()) {
+            return this.record.Transfer.TimeOut;
+        } else {
+            throw new Error('TimeOut is not available');
+        }
+    }
+
+    get timeOff() {
+        if (this.isFlight()) {
+            return this.record.Flight.TimeOff;
+        } else {
+            throw new Error('TimeOff is not available');
+        }
+    }
+
+    get timeOn() {
+        if (this.isFlight()) {
+            return this.record.Flight.TimeOn;
+        } else {
+            throw new Error('TimeOn is not available');
+        }
+    }
+
+    get timeIn() {
+        if (this.isFlight()) {
+            return this.record.Flight.TimeIn;
+        } else if (this.isTransfer()) {
+            return this.record.Transfer.TimeIn;
+        } else {
+            throw new Error('TimeIn is not available');
+        }
+    }
+
+    get totalTime() {
+        if (this.isFlight()) {
+            return this.record.Flight.TotalTime;
+        } else {
+            throw new Error('TotalTime is not available');
+        }
+    }
+
+    get airTime() {
+        if (this.isFlight()) {
+            return this.record.Flight.AirTime;
+        } else {
+            throw new Error('AirTime is not available');
+        }
+    }
+
+    get distance() {
+        if (this.isFlight()) {
+            return this.record.Flight.Distance;
+        } else {
+            throw new Error('Distance is not available');
+        }
+    }
+
+    get comment() {
+        return this.record.Comment;
+    }
+
+    get remarks() {
+        return this.record.Remarks;
     }
 
     isFlight() {
