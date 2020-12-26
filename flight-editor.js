@@ -86,13 +86,30 @@ var FlightEditor = {
             url: distanceUrl + '/v1/distance?from=$from$&to=$to$'.replace('$from$', from.toUpperCase()).replace('$to$', to.toUpperCase()),
             method: 'GET',
             success: function (response) {
-                var distanceStr = response;
+                const distanceStr = response;
                 FlightEditor.crowFlightDistanceField.val(distanceStr);
+                FlightEditor.revalidateDistanceField();
             },
             error: function (e) {
                 FlightEditor.crowFlightDistanceField.val("N/A");
+                FlightEditor.revalidateDistanceField();
             }
         });
+    },
+
+    revalidateDistanceField: function () {
+        const crowFlightDistanceStr = this.crowFlightDistanceField.val();
+        if (crowFlightDistanceStr === 'N/A') {
+            this.distanceField[0].setCustomValidity('');
+            return;
+        }
+        const crowFlightDistance = parseInt(crowFlightDistanceStr);
+        const distance = parseInt(this.distanceField.val());
+        if (distance < crowFlightDistance) {
+            this.distanceField[0].setCustomValidity('Flown Distance can not be below Crow Flight Distance');
+            return;
+        }
+        this.distanceField[0].setCustomValidity('');
     },
 
     updateTotalTime: function () {
@@ -242,5 +259,9 @@ $(document).ready(function () {
 
     FlightEditor.timeInField.change(function () {
         FlightEditor.updateTotalTime();
+    });
+
+    FlightEditor.distanceField.change(function () {
+        FlightEditor.revalidateDistanceField();
     });
 });
