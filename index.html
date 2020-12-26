@@ -116,6 +116,8 @@
         }
 
         function actionsCellFormatter(value, row, index) {
+            const record = new Record(row);
+
             var result = '<div class="btn-group" role="group">'
                 + '<button id="actionsButtonGroup_' + index +'" type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#</button>'
                 + '<div class="dropdown-menu" aria-labelledby="actionsButtonGroup_' + index + '">';
@@ -124,7 +126,11 @@
 
             // current row actions
             result += '<a class="dropdown-item" href="#" onclick="openDetails(' + index + ')">Details</a>';
-            if (RecordType.isDiscontinuity(row['Type'])) {
+            if (record.isFlight()) {
+                result += '<a class="dropdown-item" href="#" onclick="FlightEditor.onDeleteClicked(' + index + ')">Delete</a>';
+            } else if (record.isTransfer()) {
+                result += '<a class="dropdown-item" href="#" onclick="TransferEditor.onDeleteClicked(' + index + ')">Delete</a>';
+            } else if (record.isDiscontinuity()) {
                 result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')">Delete</a>';
             }
 

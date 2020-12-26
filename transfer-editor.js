@@ -29,6 +29,10 @@ var TransferEditor = {
         dialog.modal();
     },
 
+    onDeleteClicked: function (index) {
+        alert('not implemented');
+    },
+
     updateCrowFlightDistance: function () {
         var from = nonEmpty($('#transferEditorModal-departure').val());
         var to = nonEmpty($('#transferEditorModal-destination').val());

@@ -191,8 +191,8 @@ class Record {
         var to;
 
         if (this.isFlight() || this.isTransfer()) {
-            var timeOutStr = this.record['TimeOut'];
-            var timeInStr = this.record['TimeIn'];
+            var timeOutStr = this.isFlight() ? this.record.Flight.TimeOut : this.record.Transfer.TimeOut;
+            var timeInStr = this.isFlight() ? this.record.Flight.TimeIn : this.record.Transfer.TimeIn;
 
             var timeOut = parseHHMM(timeOutStr);
             var timeIn = parseHHMM(timeInStr);

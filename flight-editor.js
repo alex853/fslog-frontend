@@ -73,6 +73,65 @@ var FlightEditor = {
         this.dialog.modal();
     },
 
+    onDeleteClicked: function (index) {
+        var record = new Record(records[index]);
+        var nextRecord = (index + 1 < records.length) ? new Record(records[index + 1]) : null;
+
+        var confirmed = confirm('Please confirm that the flight record should be deleted'); // todo confirmation dialog
+        if (!confirmed) {
+            return;
+        }
+
+        if (nextRecord && !nextRecord.isDiscontinuity()) {
+            // this will replace the flight record with the discontinuity record
+            const newDiscontinuity = {
+                "UserID": record.record.UserID,
+                "BeginningDT": record.record.BeginningDT,
+                "RecordID": generateUUID(),
+                "Type": "discontinuity",
+                "Date": record.record.Date,
+                "Discontinuity": {
+                    "Time": record.record.TimeOut
+                },
+                "Comment": "The discontinuity added after flight record deletion",
+                "Remarks": null
+            };
+
+            $.ajax({
+                url: gatewayUrl,
+                method: 'POST',
+                dataType: 'json',
+                data: JSON.stringify(newDiscontinuity),
+                success: function (response) {
+                    showAlert("Flight removed successfully", "success", 5000);
+                    // todo update grid
+                },
+                error: function (e) {
+                    showAlert("Error happened!", "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+        } else {
+            $.ajax({
+                url: gatewayUrl,
+                method: 'DELETE',
+                dataType: 'json',
+                data: JSON.stringify({
+                    "UserID": record.record.UserID,
+                    "BeginningDT": record.record.BeginningDT
+                }),
+                success: function (response) {
+                    showAlert("Flight removed successfully", "success", 5000);
+                    // todo update grid
+                },
+                error: function (e) {
+                    showAlert("Error happened!", "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+        }
+    },
+
     updateCrowFlightDistance: function () {
         var from = nonEmpty(this.departureField.val());
         var to = nonEmpty(this.destinationField.val());

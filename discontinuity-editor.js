@@ -66,7 +66,7 @@ var DiscontinuityEditor = {
 
         dialog.modal('hide');
 
-        var transfer = {
+        var newDiscontinuity = {
             "UserID": myUserId,
             "BeginningDT": $('#discontinuityEditorModal-date').val() + 'T' + $('#discontinuityEditorModal-time').val(),
             "RecordID": generateUUID(),
@@ -83,7 +83,7 @@ var DiscontinuityEditor = {
             url: gatewayUrl,
             method: 'POST',
             dataType: 'json',
-            data: JSON.stringify(transfer),
+            data: JSON.stringify(newDiscontinuity),
             success: function (response) {
                 showAlert("Discontinuity added successfully", "success", 5000);
                 // todo update grid
