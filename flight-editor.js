@@ -19,7 +19,7 @@ var FlightEditor = {
         enableField(this.flightNumberField).val(isPreviousFlight ? previousRecord.flightNumber : undefined);
         enableField(this.aircraftTypeField).val(isPreviousFlight ? previousRecord.aircraftType : undefined);
         enableField(this.aircraftRegistrationField).val(isPreviousFlight ? previousRecord.aircraftRegistration : undefined);
-        if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
+        if (previousRecord.isFlight() || previousRecord.isTransfer()) {
             disableField(this.departureField).val(previousRecord.destination);
         } else {
             enableField(this.departureField).val(undefined);
