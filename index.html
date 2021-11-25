@@ -125,13 +125,13 @@
             var isLast = index === records.length - 1;
 
             // current row actions
-            result += '<a class="dropdown-item" href="#" onclick="openDetails(' + index + ')">Details</a>';
+            result += '<a class="dropdown-item" onclick="openDetails(' + index + ')">Details</a>';
             if (record.isFlight()) {
-                result += '<a class="dropdown-item" href="#" onclick="FlightEditor.onDeleteClicked(' + index + ')">Delete</a>';
+                result += '<a class="dropdown-item" onclick="FlightEditor.onDeleteClicked(' + index + ')">Delete</a>';
             } else if (record.isTransfer()) {
-                result += '<a class="dropdown-item" href="#" onclick="TransferEditor.onDeleteClicked(' + index + ')">Delete</a>';
+                result += '<a class="dropdown-item" onclick="TransferEditor.onDeleteClicked(' + index + ')">Delete</a>';
             } else if (record.isDiscontinuity()) {
-                result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')">Delete</a>';
+                result += '<a class="dropdown-item" onclick="DiscontinuityEditor.onDeleteClicked(' + index + ')">Delete</a>';
             }
 
             result += '<div class="dropdown-divider"></div>';
@@ -139,14 +139,14 @@
             var isNextDiscontinuity = !isLast && RecordType.isDiscontinuity(records[index + 1].Type);
 
             if (isLast || isNextDiscontinuity) {
-                result += '<a class="dropdown-item" href="#" onclick="FlightEditor.onAddClicked(' + index + ')">Add Flight</a>';
+                result += '<a class="dropdown-item" onclick="FlightEditor.onAddClicked(' + index + ')">Add Flight</a>';
             }
 
             if (isLast || isNextDiscontinuity) {
-                result += '<a class="dropdown-item" href="#" onclick="TransferEditor.onAddClicked(' + index + ')">Add Transfer</a>';
+                result += '<a class="dropdown-item" onclick="TransferEditor.onAddClicked(' + index + ')">Add Transfer</a>';
             }
 
-            result += '<a class="dropdown-item" href="#" onclick="DiscontinuityEditor.onAddClicked(' + index + ')">Add Discontinuity</a>';
+            result += '<a class="dropdown-item" onclick="DiscontinuityEditor.onAddClicked(' + index + ')">Add Discontinuity</a>';
 
             result += '</div>'
                 + '</div>';
