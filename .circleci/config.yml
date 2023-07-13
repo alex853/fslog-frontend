@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-and-deploy-to-staging:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:20.0.1
     working_directory: ~/repo
     environment:
       JVM_OPTS: -Xmx3200m
