@@ -1,0 +1,67 @@
+version: 2
+jobs:
+  build-and-deploy-to-staging:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/repo
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+      - run: gradle build
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+      - add_ssh_keys
+      - run:
+          name: Deploy Over SSH
+          command: |
+            echo '${SSH_KNOWN_HOST}' >> ~/.ssh/known_hosts
+            scp -o StrictHostKeyChecking=no -P ${SSH_PORT} -r ~/repo/build/libs/*.war ${SSH_USER}@${SSH_HOST}:~/circleciuploads/tomcat.staging/fslog.war
+
+  build-and-deploy-to-prod:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/repo
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+      - run: gradle build
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+      - add_ssh_keys
+      - run:
+          name: Deploy Over SSH
+          command: |
+            echo '${SSH_KNOWN_HOST}' >> ~/.ssh/known_hosts
+            scp -o StrictHostKeyChecking=no -P ${SSH_PORT} -r ~/repo/build/libs/*.war ${SSH_USER}@${SSH_HOST}:~/circleciuploads/tomcat.prod/fslog.war
+
+workflows:
+  version: 2
+  build-and-deploy-to-staging:
+    jobs:
+      - build-and-deploy-to-staging:
+          filters:
+            branches:
+              only: develop
+
+  build-and-deploy-to-prod:
+    jobs:
+      - build-and-deploy-to-prod:
+          filters:
+            branches:
+              only: prod
