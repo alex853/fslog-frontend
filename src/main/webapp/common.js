@@ -30,6 +30,11 @@ function formatMinutesAsHHMM(minutes) {
     return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
 }
 
+function hoursDurationAsHMM(hours) {
+    var minutes = Math.trunc(hours * 60);
+    return formatMinutesAsHMM(minutes);
+}
+
 function nonEmpty(s) {
     if (!s) {
         return undefined;
