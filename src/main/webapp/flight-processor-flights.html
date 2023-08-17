@@ -50,7 +50,7 @@
                     for (var i = records.length-1; i >= 0; i--) {
                         var record = records[i];
 
-/*                        if (currentDate !== record.dateOfFlight) {
+                        if (currentDate !== record.dateOfFlight) {
                             currentDate = record.dateOfFlight;
 
                             flightsContainer
@@ -59,7 +59,7 @@
                             flightsContainer
                                 .append($("#dateHeader").html()
                                     .replace("$date$", currentDate));
-                        }*/
+                        }
 
                         var rowHtml = $("#flightShortInfoTemplate").html();
                         rowHtml = showFlightInfo(rowHtml, record, "short");
@@ -160,8 +160,6 @@
 
 <div class="container" id="flightsContainer">
     <p>&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>&nbsp;</p>
 
     <div style="display: none">
         <div id="flightRowTemplate">
@@ -169,20 +167,11 @@
                 <div class="col-12 fslog-row-data"></div>
             </div>
         </div>
-        <div id="flightRowTemplate_with_button">
-            <div class="row p-1 mb-1 fslog-row">
-                <div class="col-11 fslog-row-data"></div>
-                <div class="col-1">
-                    <button type="button" class="btn btn-outline-dark btn-sm" onclick="switchFlightViewMode(this)">#</button>
-                </div>
-            </div>
-        </div>
 
         <div id="flightShortInfoTemplate">
             <div class="row border-top p-1">
-                <div class="col-2">
-                    $callsign$<br>
-                    <small>$dateOfFlight$</small>
+                <div class="col-2 my-auto">
+                    $callsign$
                 </div>
                 <div class="col-1">
                     $type$<br>
@@ -206,48 +195,12 @@
             </div>
         </div>
 
-        <div id="flightFullInfoTemplate">
-            <div class="row">
-                <div class="col-1">
-                    $flight$<br>
-                    $callsign$
-                </div>
-                <div class="col-1">
-                    $type$<br>
-                    $reg$
-                </div>
-                <div class="col-1">
-                    $dep$<br>
-                    <small>$timeOut$</small><br>
-                    <small>$timeOff$</small>
-                </div>
-                <div class="col-1">
-                    $dest$<br>
-                    <small>$timeOn$</small><br>
-                    <small>$timeIn$</small>
-                </div>
-                <div class="col-1">
-                    $dist$&nbsp;nm<br>
-                    $dctDist$<br>
-                    $totalTime$<br>
-                    $airTime$
-                </div>
-                <div class="col-7">
-                    <div class="text-right">
-                        <!--button type="button" class="btn btn-outline-danger btn-sm">Delete</button-->
-                        <!--button type="button" class="btn btn-outline-success btn-sm">Edit</button-->
-                    </div>
-                    $comment$
-                </div>
-            </div>
-        </div>
-
         <div id="daysSeparator">
             <p>&nbsp;</p>
         </div>
 
         <div id="dateHeader">
-            <h5>Date $date$</h5>
+            <h6>Date $date$</h6>
         </div>
     </div>
 
