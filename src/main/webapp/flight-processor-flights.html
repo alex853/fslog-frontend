@@ -20,8 +20,19 @@
 
     <script>
 
-        var gatewayUrl = 'http://simforge.net:7122/service/v1/flights?pilotNumber=913904';
-        var distanceUrl = 'https://simforge.net:7091';
+        var queryString = window.location.search;
+        var urlParams = new URLSearchParams(queryString);
+        var pilotNumber = urlParams.get('pn');
+
+        if (!pilotNumber) {
+            pilotNumber = '913904';
+        }
+
+        //var gatewayUrl = 'http://simforge.net:7122/service/v1/flights?pilotNumber=913904';
+        //var gatewayUrl = 'http://simforge.net:7122/service/v1/flights?pilotNumber=1544123';
+        var gatewayUrl = 'http://82.146.44.100:7122/service/v1/flights?pilotNumber=' + pilotNumber;
+        //var distanceUrl = 'https://simforge.net:7091';
+        var distanceUrl = 'https://82.146.44.100:7091';
 
         var records = undefined;
 
@@ -36,10 +47,10 @@
 
                     var flightsContainer = $("#flightsContainer");
 
-                    for (var i = 0; i < records.length; i++) {
+                    for (var i = records.length-1; i >= 0; i--) {
                         var record = records[i];
 
-                        if (currentDate !== record.dateOfFlight) {
+/*                        if (currentDate !== record.dateOfFlight) {
                             currentDate = record.dateOfFlight;
 
                             flightsContainer
@@ -48,15 +59,14 @@
                             flightsContainer
                                 .append($("#dateHeader").html()
                                     .replace("$date$", currentDate));
-                        }
+                        }*/
 
-                        var rowHtml = $("#flightRowTemplate").html();
+                        var rowHtml = $("#flightShortInfoTemplate").html();
+                        rowHtml = showFlightInfo(rowHtml, record, "short");
                         flightsContainer.append(rowHtml);
-                        var row = flightsContainer.find(".fslog-row").last();
-                        showFlightInfo(row, record, "short");
                     }
 
-                    $("html").scrollTop($(document).height());
+                    //$("html").scrollTop($(document).height());
                     //$('[data-toggle="tooltip"]').tooltip();
                 },
                 error: function (e) {
@@ -94,12 +104,10 @@
             showFlightInfo(row, record, mode);
         }
 
-        function showFlightInfo(row, record, mode) {
-            var dataHtml = mode === "short"
-                ? $("#flightShortInfoTemplate").html()
-                : $("#flightFullInfoTemplate").html();
+        function showFlightInfo(dataHtml, record, mode) {
             dataHtml = dataHtml
                 //.replace("$uid$", uid)
+                .replace("$dateOfFlight$", record.dateOfFlight)
                 .replace("$flight$", 'n/s')
                 .replace("$callsign$", record.callsign || '&nbsp;')
                 .replace("$type$", record.aircraftType || '&nbsp;')
@@ -116,9 +124,7 @@
                 .replace("$dctDist$", 'n/a')
                 .replace("$comment$", 'n/i')
                 .replace("$remarks$", 'n/i');
-            row.find(".fslog-row-data").html(dataHtml);
-
-            record.mode = mode;
+            return dataHtml;
         }
 
     </script>
@@ -134,16 +140,19 @@
     <div class="collapse navbar-collapse justify-content-md-center" id="navbarsExample08">
         <ul class="navbar-nav">
             <li class="nav-item active">
-                <a class="nav-link" href="#">2019<span class="sr-only">(current)</span></a>
+                <a class="nav-link" href="#">SOME<span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">2020</a>
+                <a class="nav-link" href="#">MENU</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">2021</a>
+                <a class="nav-link" href="#">WILL</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">2022</a>
+                <a class="nav-link" href="#">BE</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">HERE</a>
             </li>
         </ul>
     </div>
@@ -156,6 +165,11 @@
 
     <div style="display: none">
         <div id="flightRowTemplate">
+            <div class="row p-1 mb-0 fslog-row">
+                <div class="col-12 fslog-row-data"></div>
+            </div>
+        </div>
+        <div id="flightRowTemplate_with_button">
             <div class="row p-1 mb-1 fslog-row">
                 <div class="col-11 fslog-row-data"></div>
                 <div class="col-1">
@@ -165,28 +179,30 @@
         </div>
 
         <div id="flightShortInfoTemplate">
-            <div class="row">
-                <div class="col-1">
-                    $flight$<br>
-                    $callsign$
+            <div class="row border-top p-1">
+                <div class="col-2">
+                    $callsign$<br>
+                    <small>$dateOfFlight$</small>
                 </div>
                 <div class="col-1">
                     $type$<br>
                     $reg$
                 </div>
-                <div class="col-1">
-                    $dep$<br>
-                    <small>$timeOut$</small>
+                <div class="col-2 my-auto">
+                    =status=
                 </div>
-                <div class="col-1">
-                    $dest$<br>
-                    <small>$timeIn$</small>
+                <div class="col-3">
+                    [FL] $dep$ ==name==<br>
+                    <small>Out $timeOut$ Off $timeOff$</small>
+                </div>
+                <div class="col-3">
+                    [FL] $dest$ ==name==<br>
+                    <small>On $timeOn$ In $timeIn$</small>
                 </div>
                 <div class="col-1">
                     $totalTime$<br>
                     <small>$dist$&nbsp;nm</small>
                 </div>
-                <div class="col-7 my-auto">$comment$</div>
             </div>
         </div>
 
