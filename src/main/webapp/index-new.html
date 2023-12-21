@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!--link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico"-->
+
+    <title>FSLog</title>
+
+    <!--link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/grid/"-->
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <!--    <script src="js/bootstrap.min.js"></script>-->
+    <script src="common.js"></script>
+
+    <script>
+
+        var gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
+        var distanceUrl = 'http://82.146.44.100:7091';
+
+        var records = undefined;
+
+        $(document).ready(function () {
+            $.ajax({
+                url: gatewayUrl,
+                method: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    records = response.Items;
+                    var currentDate = undefined;
+                    var todayDate = new Date().toISOString().split('T')[0];
+
+                    var flightsContainer = $("#flightsContainer");
+                    var isTodayAdded = false;
+
+                    for (var i = 0; i < records.length; i++) {
+                        var record = records[i];
+
+                        if (currentDate !== record.Date) {
+                            currentDate = record.Date;
+
+                            flightsContainer
+                                .append($("#daysSeparator").html());
+
+                            if (currentDate !== todayDate) {
+                                flightsContainer
+                                    .append($("#dateHeader").html()
+                                        .replace("$date$", currentDate));
+                            } else {
+                                flightsContainer
+                                    .append($("#todayHeader").html()
+                                        .replace("$date$", currentDate));
+                                isTodayAdded = true;
+                            }
+                        }
+
+                        if (RecordType.isFlight(record.Type)) {
+                            const rowHtml = $("#flightRowTemplate").html();
+                            flightsContainer.append(rowHtml);
+                            const row = flightsContainer.find(".row").last();
+                            row.data("recordId", record.RecordID);
+                            const html = showFlightInfo(row, record, "short");
+                            row.html(html);
+                        } else if (RecordType.isTransfer(record.Type)) {
+                            const rowHtml = $("#transferRowTemplate").html();
+                            flightsContainer.append(rowHtml);
+                            const row = flightsContainer.find(".row").last();
+                            row.data("recordId", record.RecordID);
+                            const template = $("#transferInfoTemplate").html();
+                            const html = template
+                                .replace("$dep$", record.Transfer.Departure || '')
+                                .replace("$dest$", record.Transfer.Destination || '')
+                                .replace("$timeOut$", record.Transfer.TimeOut || '')
+                                .replace("$timeIn$", record.Transfer.TimeIn || '')
+                                .replace("$comment$", record.Comment || '');
+                            row.html(html);
+                        } else { // Discontinuity
+                            var template = $("#discontinuityRowTemplate").html();
+                            template = template
+                                .replace("$comment$", record.Comment || '');
+                            flightsContainer
+                                .append(template);
+                        }
+                    }
+
+                    if (!isTodayAdded) {
+                        flightsContainer
+                            .append($("#daysSeparator").html())
+                            .append($("#todayHeader").html()
+                                .replace("$date$", new Date().toISOString().split('T')[0]))
+                            .append($("#todayAddEntryRow").html())
+                            .append($("#todayFooter").html());
+                    } else {
+                        flightsContainer
+                            .append($("#todayAddEntryRow").html())
+                            .append($("#todayFooter").html());
+                    }
+
+                    $("html").scrollTop($(document).height());
+                    //$('[data-toggle="tooltip"]').tooltip();
+                },
+                error: function (e) {
+                    // todo show error alert
+                    console.log(e.responseText);
+                }
+            });
+        });
+
+        function switchFlightViewMode(btn) {
+            var row = $(btn).parent().parent().parent();
+            var recordId = row.data("recordId");
+
+            var record;
+            for (var i = 0; i < records.length; i++) {
+                var each = records[i];
+                if (each.RecordID === recordId) {
+                    record = each;
+                    break;
+                }
+            }
+
+            if (!record) {
+                alert("cant find record");
+                return;
+            }
+
+            var mode = record.mode;
+            if (mode === "short") {
+                mode = "full";
+            } else {
+                mode = "short";
+            }
+            record.mode = mode;
+            var flightHtml = showFlightInfo(row, record, mode);
+            row.html(flightHtml);
+        }
+
+        function showFlightInfo(row, record, mode) {
+            var dataHtml = mode === "short"
+                ? $("#flightShortInfoTemplate").html()
+                : $("#flightFullInfoTemplate").html();
+            dataHtml = dataHtml
+                //.replace("$uid$", uid)
+                .replace("$flight$", record.Flight.FlightNumber || '&nbsp;')
+                .replace("$callsign$", record.Flight.Callsign || '&nbsp;')
+                .replace("$type$", record.Flight.AircraftType || '&nbsp;')
+                .replace("$reg$", record.Flight.AircraftRegistration || '&nbsp;')
+                .replace("$dep$", record.Flight.Departure || '&nbsp;')
+                .replace("$dest$", record.Flight.Destination || '&nbsp;')
+                .replace("$timeOut$", record.Flight.TimeOut || '&nbsp;')
+                .replace("$timeOff$", record.Flight.TimeOff || '&nbsp;')
+                .replace("$timeOn$", record.Flight.TimeOn || '&nbsp;')
+                .replace("$timeIn$", record.Flight.TimeIn || '&nbsp;')
+                .replace("$totalTime$", record.Flight.TotalTime || '&nbsp;')
+                .replace("$airTime$", record.Flight.AirTime || '&nbsp;')
+                .replace("$dist$", record.Flight.Distance || '&nbsp;')
+                .replace("$dctDist$", 'n/a')
+                .replace("$comment$", record.Comment || '&nbsp;')
+                .replace("$remarks$", record.Remarks || '&nbsp;');
+            //row.find(".fslog-row-data").html(dataHtml);
+
+            record.mode = mode;
+
+            return dataHtml;
+        }
+
+        let editorRow;
+
+        function addFlightClicked(btn) {
+            if (editorRow) {
+                saveNewFlight(btn);
+            } else {
+                const lastRecord = new Record(records[records.length - 1]);
+
+                const editorHtml = $("#flightEditorTemplate").html();
+                $(editorHtml).insertBefore($(btn).parent().parent());
+                editorRow = $(btn).parent().parent().prev();
+                editorRow.fields = {};
+                editorRow.calculated = {};
+                editorRow.fields.callsign = editorRow.find('#flightEditor-callsign');
+                editorRow.fields.flightNumber = editorRow.find('#flightEditor-flightNumber');
+                editorRow.fields.aircraftType = editorRow.find('#flightEditor-aircraftType');
+                editorRow.fields.aircraftRegistration = editorRow.find('#flightEditor-aircraftRegistration');
+
+                editorRow.fields.departure = editorRow.find('#flightEditor-from');
+                editorRow.fields.destination = editorRow.find('#flightEditor-to');
+                editorRow.fields.destination.keyup(airportEditorKeyUp);
+
+                editorRow.fields.timeOut = editorRow.find('#flightEditor-timeOut');
+                editorRow.fields.timeOut.keypress(timeEditorKeyPress).keyup(timeEditorKeyUp);
+                editorRow.fields.timeOff = editorRow.find('#flightEditor-timeOff');
+                editorRow.fields.timeOff.keypress(timeEditorKeyPress).keyup(timeEditorKeyUp);
+
+                editorRow.fields.timeOn = editorRow.find('#flightEditor-timeOn');
+                editorRow.fields.timeOn.keypress(timeEditorKeyPress).keyup(timeEditorKeyUp);
+                editorRow.fields.timeIn = editorRow.find('#flightEditor-timeIn');
+                editorRow.fields.timeIn.keypress(timeEditorKeyPress).keyup(timeEditorKeyUp);
+
+                editorRow.fields.totalTime = editorRow.find('#flightEditor-totalTime');
+                editorRow.fields.distance = editorRow.find('#flightEditor-distance');
+
+                editorRow.fields.comment = editorRow.find('#flightEditor-comment');
+
+                const isLastFlight = lastRecord.isFlight();
+
+                editorRow.fields.callsign.val(isLastFlight ? lastRecord.callsign : undefined);
+                editorRow.fields.flightNumber.val(isLastFlight ? lastRecord.flightNumber : undefined);
+                editorRow.fields.aircraftType.val(isLastFlight ? lastRecord.aircraftType : undefined);
+                editorRow.fields.aircraftRegistration.val(isLastFlight ? lastRecord.aircraftRegistration : undefined);
+
+                if (isLastFlight || lastRecord.isTransfer()) {
+                    editorRow.fields.departure.val(lastRecord.destination);
+                    disableField(editorRow.fields.departure);
+                }
+
+                hideButton('.add-transfer-button');
+                showButton('.discard-button');
+            }
+        }
+
+        function saveNewFlight(btn) {
+            const dateOfFlight = new Date().toISOString().split('T')[0];
+            const flight = {
+                "UserID": myUserId,
+                "BeginningDT": dateOfFlight + 'T' + editorRow.fields.timeOut.val(),
+                "RecordID": generateUUID(),
+                "Type": "flight",
+                "Date": dateOfFlight,
+                "Flight": {
+                    "Callsign": nonEmptyUpperCase(editorRow.fields.callsign.val()),
+                    "FlightNumber": nonEmptyUpperCase(editorRow.fields.flightNumber.val()),
+                    "AircraftType": nonEmptyUpperCase(editorRow.fields.aircraftType.val()),
+                    "AircraftRegistration": nonEmptyUpperCase(editorRow.fields.aircraftRegistration.val()),
+                    "Departure": nonEmptyUpperCase(editorRow.fields.departure.val()),
+                    "Destination": nonEmptyUpperCase(editorRow.fields.destination.val()),
+                    "TimeOut": nonEmpty(editorRow.fields.timeOut.val()),
+                    "TimeOff": nonEmpty(editorRow.fields.timeOff.val()),
+                    "TimeOn": nonEmpty(editorRow.fields.timeOn.val()),
+                    "TimeIn": nonEmpty(editorRow.fields.timeIn.val()),
+                    "Distance": nonEmptyInt(editorRow.fields.distance.val()),
+                    "TotalTime": nonEmpty(editorRow.calculated.totalTime),
+                    "AirTime": nonEmpty(editorRow.calculated.airTime)
+                },
+                "Comment": nonEmpty(editorRow.fields.comment.val()),
+                "Remarks": nonEmpty(/*this.remarksField.val()*/null)
+            };
+
+            let results = [];
+            results.push(validateFieldNonEmpty(flight["Flight"]["AircraftType"], editorRow.fields.aircraftType));
+            results.push(validateFieldNonEmpty(flight["Flight"]["Departure"], editorRow.fields.departure));
+            results.push(validateFieldNonEmpty(flight["Flight"]["Destination"], editorRow.fields.destination));
+            results.push(validateFieldNonEmpty(flight["Flight"]["TimeOut"], editorRow.fields.timeOut));
+            results.push(validateFieldNonEmpty(flight["Flight"]["TimeIn"], editorRow.fields.timeIn));
+            results.push(validateFieldNonEmpty(flight["Flight"]["Distance"], editorRow.fields.distance));
+            for (i = 0; i < results.length; i++) {
+                if (!results[i]) {
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: gatewayUrl,
+                method: 'POST',
+                dataType: 'json',
+                data: JSON.stringify(flight),
+                success: function (response) {
+                    showAlert("Flight added successfully", "success", 5000);
+
+                    discardClicked();
+
+                    const record = flight;
+                    records.push(record);
+
+                    const rowHtml = $("#flightRowTemplate").html();
+                    const row = $(rowHtml).insertBefore($(btn).parent().parent())
+                    row.data("recordId", record.RecordID);
+                    const flightHtml = showFlightInfo(row, record, "short");
+                    row.html(flightHtml);
+                },
+                error: function (e) {
+                    showAlert("Error happened!", "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+        }
+
+        function validateFieldNonEmpty(value, field) {
+            const conditionResult = value !== undefined;
+            if (!conditionResult) {
+                field.addClass('is-invalid');
+                setTimeout(function() { field.removeClass('is-invalid'); }, 10000);
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        function timeEditorKeyPress(e) {
+            const charCode = (e.which) ? e.which : e.keyCode
+
+            if (String.fromCharCode(charCode).match(/[^0-9]/g)) {
+                return false;
+            }
+
+            const editor = $(e.currentTarget);
+            let value = editor.val();
+            if (value.length === 2) {
+                value = value + ':';
+                editor.val(value);
+            } else if (value.length === 5) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function airportEditorKeyUp(e) {
+            const from = nonEmptyUpperCase(editorRow.fields.departure.val());
+            const to = nonEmptyUpperCase(editorRow.fields.destination.val());
+
+            $.ajax({
+                url: distanceUrl + '/v1/distance?from=$from$&to=$to$'.replace('$from$', from.toUpperCase()).replace('$to$', to.toUpperCase()),
+                method: 'GET',
+                success: function (response) {
+                    const distanceStr = response;
+                    if (!editorRow.fields.distance.val()) {
+                        editorRow.fields.distance.val(distanceStr);
+                    }
+                },
+                error: function (e) {
+                    editorRow.fields.distance.val(null);
+                }
+            });
+        }
+
+        function timeEditorKeyUp(e) {
+            recalculateTimeFields();
+        }
+
+        function recalculateTimeFields() {
+           const timeOutStr = editorRow.fields.timeOut.val();
+           const timeOffStr = editorRow.fields.timeOff.val();
+           const timeOnStr = editorRow.fields.timeOn.val();
+           const timeInStr = editorRow.fields.timeIn.val();
+
+           const timeOut = parseHHMM(timeOutStr);
+           const timeOff = parseHHMM(timeOffStr);
+           const timeOn = parseHHMM(timeOnStr);
+           const timeIn = parseHHMM(timeInStr);
+
+           if (timeOut && timeIn) {
+               let time = timeIn['total'] - timeOut['total'];
+               if (time < 0) {
+                   time += 24 * 60;
+               }
+               const totalTimeStr = formatMinutesAsHMM(time);
+               editorRow.calculated.totalTime = totalTimeStr;
+               editorRow.fields.totalTime.val(totalTimeStr);
+           } else {
+               editorRow.calculated.totalTime = null;
+               editorRow.fields.totalTime.val(null);
+           }
+
+           if (timeOff && timeOn) {
+               let time = timeOn['total'] - timeOff['total'];
+               if (time < 0) {
+                   time += 24 * 60;
+               }
+               const airTimeStr = formatMinutesAsHMM(time);
+               editorRow.calculated.airTime = airTimeStr;
+           } else {
+               editorRow.calculated.airTime = null;
+           }
+        }
+
+        function discardClicked(btn) {
+            if (editorRow) {
+                $("#flightsContainer").find('.fslog-flight-editor').remove();
+
+                showButton('.add-transfer-button');
+                hideButton('.discard-button');
+
+                editorRow = null;
+            }
+        }
+
+        function hideButton(name) {
+            $("#flightsContainer").find(name).addClass('d-none');
+        }
+
+        function showButton(name) {
+            $("#flightsContainer").find(name).removeClass('d-none');
+        }
+
+    </script>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample08" aria-controls="navbarsExample08" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-md-center" id="navbarsExample08">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">2019<span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">2020</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">2021</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">2022</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">2023</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container" id="flightsContainer">
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+</div>
+
+<div id="templates">
+    <div style="display: none">
+        <div id="flightRowTemplate">
+            <div class="row mb-3"></div>
+        </div>
+
+        <div id="flightShortInfoTemplate">
+            <div class="col-1">
+                $callsign$<br>
+                <small>$flight$</small>
+            </div>
+            <div class="col-1">
+                $type$<br>
+                <small>$reg$</small>
+            </div>
+            <div class="col-3">
+                $dep$ Some airport<br>
+                <small>$timeOut$</small>
+            </div>
+            <div class="col-3">
+                $dest$ Another airport<br>
+                <small>$timeIn$</small>
+            </div>
+            <div class="col-1">
+                $totalTime$<br>
+                <small>$dist$&nbsp;nm</small>
+            </div>
+            <div class="col-3">
+                <span style="width: 90%">$comment$</span>
+                <span style="width: 10%; float: right;"><button type="button" class="btn btn-outline-dark btn-sm" onclick="switchFlightViewMode(this)">#</button></span>
+            </div>
+        </div>
+
+        <div id="flightFullInfoTemplate">
+            <div class="col-1">
+                $callsign$<br>
+                <small>$flight$</small>
+            </div>
+            <div class="col-1">
+                $type$<br>
+                <small>$reg$</small>
+            </div>
+            <div class="col-3">
+                $dep$ Some airport<br>
+                <small>Departed $timeOut$</small><br>
+                <small>Takeoff $timeOff$</small>
+            </div>
+            <div class="col-3">
+                $dest$ Another airport<br>
+                <small>Landing $timeOn$</small><br>
+                <small>Arrived $timeIn$</small>
+            </div>
+            <div class="col-1">
+                $totalTime$
+                <small>$dist$&nbsp;nm</small>
+            </div>
+            <div class="col-3">
+                <!--div class="text-right">
+                    <button type="button" class="btn btn-outline-danger btn-sm">Delete</button>
+                    <button type="button" class="btn btn-outline-success btn-sm">Edit</button>
+                </div-->
+                <span style="width: 90%">$comment$</span>
+                <span style="width: 10%; float: right;"><button type="button" class="btn btn-outline-dark btn-sm" onclick="switchFlightViewMode(this)">#</button></span>
+            </div>
+        </div>
+
+        <div id="flightEditorTemplate">
+            <div class="row fslog-flight-editor shadow-lg p-3 mb-5 bg-white rounded">
+                <div class="col-1 p-1">
+                    <input type="text"
+                           id="flightEditor-callsign"
+                           placeholder="Callsign"
+                           class="form-control form-control-sm"
+                           style="text-transform: uppercase;">
+                    <input type="text"
+                           id="flightEditor-flightNumber"
+                           placeholder="Flight #"
+                           class="form-control form-control-sm"
+                           style="text-transform: uppercase;">
+                </div>
+                <div class="col-1 p-1">
+                    <input type="text"
+                           id="flightEditor-aircraftType"
+                           placeholder="TYPE"
+                           class="form-control form-control-sm"
+                           style="text-transform: uppercase;">
+                    <input type="text"
+                           id="flightEditor-aircraftRegistration"
+                           placeholder="Reg #"
+                           class="form-control form-control-sm"
+                           style="text-transform: uppercase;">
+                </div>
+                <div class="col-3 p-1">
+                    <div class="form-inline">
+                        <input type="text"
+                               id="flightEditor-from"
+                               placeholder="From"
+                               class="form-control form-control-sm"
+                               style="text-transform: uppercase; width: 33%;">
+                        &nbsp;
+                        Some airport
+                    </div>
+                    <div class="form-inline">
+                        <div style="width: 22%;"><small>Departed</small></div>
+                        <input type="text"
+                               id="flightEditor-timeOut"
+                               placeholder="Time Out"
+                               class="form-control form-control-sm"
+                               style="width: 28%;">
+                        <div style="width: 22%;">&nbsp;<small>Takeoff</small></div>
+                        <input type="text"
+                               id="flightEditor-timeOff"
+                               placeholder="Time Off"
+                               class="form-control form-control-sm"
+                               style="width: 28%;">
+                    </div>
+                </div>
+                <div class="col-3 p-1">
+                    <div class="form-inline">
+                        <input type="text"
+                               id="flightEditor-to"
+                               placeholder="To"
+                               class="form-control form-control-sm"
+                               style="text-transform: uppercase; width: 33%;">
+                        &nbsp;
+                        Another airport
+                    </div>
+                    <div class="form-inline">
+                        <div style="width: 22%;"><small>Landing</small></div>
+                        <input type="text"
+                               id="flightEditor-timeOn"
+                               placeholder="Time On"
+                               class="form-control form-control-sm"
+                               style="width: 28%;">
+                        <div style="width: 22%;">&nbsp;<small>Arrived</small></div>
+                        <input type="text"
+                               id="flightEditor-timeIn"
+                               placeholder="Time In"
+                               class="form-control form-control-sm"
+                               style="width: 28%;">
+                    </div>
+                </div>
+                <div class="col-1 p-1">
+                    <input type="text"
+                           id="flightEditor-totalTime"
+                           placeholder="Time"
+                           class="form-control form-control-sm"
+                           style="text-transform: uppercase;"
+                           disabled>
+                    <input type="text"
+                           id="flightEditor-distance"
+                           placeholder="Dist NM"
+                           class="form-control form-control-sm">
+                </div>
+                <div class="col-3 p-1">
+                    <textarea class="form-control form-control-sm"
+                              id="flightEditor-comment"
+                              placeholder="Comment"
+                              ></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="transferRowTemplate">
+            <div class="row mb-3 bg-light text-secondary"></div>
+        </div>
+
+        <div id="transferInfoTemplate">
+            <div class="col-2" style="text-align: center;">Transfer</div>
+            <div class="col-3">
+                $dep$ Some airport<br>
+                <small>$timeOut$</small>
+            </div>
+            <div class="col-3">
+                $dest$ Another airport<br>
+                <small>$timeIn$</small>
+            </div>
+            <div class="col-1"></div>
+            <div class="col-3">
+                <span style="width: 90%">$comment$</span>
+                <span style="width: 10%; float: right;"><button type="button" class="btn btn-outline-dark btn-sm">#</button></span>
+            </div>
+        </div>
+
+        <div id="discontinuityRowTemplate">
+            <div class="row p-1 mb-1 bg-warning">
+                <div class="col-2 my-auto">Discontinuity</div>
+                <div class="col-3"></div>
+                <div class="col-6 my-auto">$comment$</div>
+                <div class="col-1 my-auto"><button type="button" class="btn btn-outline-dark btn-sm">#</button></div>
+            </div>
+        </div>
+
+        <div id="daysSeparator">
+            <p>&nbsp;</p>
+        </div>
+
+        <div id="dateHeader">
+            <h5>Date $date$</h5>
+        </div>
+
+        <div id="todayHeader">
+            <h5>Date $date$ <span class="badge badge-info">Today</span></h5>
+        </div>
+
+        <div id="todayAddEntryRow">
+            <div class="row p-2 mb-2">
+                <div class="col-1"></div>
+                <div class="col-10 text-center">
+                    <button type="button" class="btn btn-success btn add-flight-button" onclick="addFlightClicked(this)">Add Flight</button>
+                    <button type="button" class="btn btn-info btn add-transfer-button">Add Transfer</button>
+                    <button type="button" class="btn btn-outline-warning btn discard-button d-none" onclick="discardClicked(this)">Discard</button>
+                    <button type="button" class="btn btn-outline-dark" disabled>Start Flight</button>
+                    <button type="button" class="btn btn-outline-dark" disabled>Start Transfer</button>
+                </div>
+                <div class="col-1"></div>
+            </div>
+        </div>
+
+        <div id="todayFooter">
+            <div style="height: 400px;"></div>
+        </div>
+    </div>
+
+    <div style="color: blue;">
+        TODO LIST
+        <ul>
+            <li>Loading airport info by ICAO during typing</li>
+            <li>Add transfer feature</li>
+            <li>Switching between users/profiles</li>
+            <li>Country flags next to airport name</li>
+            <li>Highlight a year in navigation tab</li>
+        </ul>
+    </div>
+
+</div> <!-- /container -->
+</body>
+</html>
