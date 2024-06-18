@@ -5,6 +5,9 @@ function parseHHMM(timeStr) {
         return undefined;
     }
     var parts = timeStr.split(':');
+    if (parts.length !== 2) {
+        return undefined;
+    }
     var hhStr = parts[0];
     var mmStr = parts[1];
     if (hhStr.length > 2 || mmStr.length !== 2) {
@@ -68,7 +71,7 @@ function nonEmptyUpperCase(s) {
 function showAlert(message, type, closeDelay) {
     var $container = $("#alerts-container");
 
-    if ($container.length == 0) {
+    if ($container.length === 0) {
         // alerts-container does not exist, create it
         $container = $('<div id="alerts-container">')
             .css({
@@ -203,7 +206,7 @@ class Record {
             var timeIn = parseHHMM(timeInStr);
 
             var durationMinutes = timeIn['total'] - timeOut['total'];
-            if (durationMinutes < 0) {  // todo code duplication
+            if (durationMinutes < 0) {
                 durationMinutes += 24 * 60;
             }
 
