@@ -1,189 +1,219 @@
-var TransferEditor = {
-    onAddClicked: function (index) {
-        var previousRecord = records[index];
 
-        var dialog = $('#transferEditorModal');
-        dialog.action = 'add-transfer';
+function addTransferClicked(discontinuityRecordId) {
+    hideButton('.add-flight-button');
+    hideButton('.add-transfer-button');
+    hideButton('.start-flight-button');
+    hideButton('.start-transfer-button');
 
-        dialog.find('.modal-title').text('Add Transfer');
+    let previousRecord;
+    let nextRecord;
 
-        var isLast = index === records.length - 1;
+    const discontinuityRecord = findRecordById(discontinuityRecordId);
 
-        if (isLast) {
-            $('#transferEditorModal-date').val(new Date().toISOString().split('T')[0]);
+    if (discontinuityRecordId) {
+        nextRecord = new Record(discontinuityRecord);
+
+        const discontinuityRecordIndex = records.indexOf(discontinuityRecord);
+        if (discontinuityRecordIndex === 0) { // "add transfer" above the first discontinuity ever
+            previousRecord = null;
         } else {
-            $('#transferEditorModal-date').val(undefined);
+            previousRecord = new Record(records[discontinuityRecordIndex - 1]);
         }
-        if (RecordType.isFlightOrTransfer(previousRecord['Type'])) {
-            $('#transferEditorModal-departure').val(
-                RecordType.isFlight(previousRecord['Type'])
-                    ? previousRecord.Flight.Destination
-                    : previousRecord.Transfer.Destination);
-            $('#transferEditorModal-departure').prop('disabled', true);
-        } else {
-            $('#transferEditorModal-departure').val(undefined);
-            $('#transferEditorModal-departure').prop('disabled', false);
-        }
-        $('#transferEditorModal-destination').val(undefined);
-
-        dialog.modal();
-    },
-
-    onDeleteClicked: function (index) {
-        alert('not implemented');
-    },
-
-    updateCrowFlightDistance: function () {
-        var from = nonEmpty($('#transferEditorModal-departure').val());
-        var to = nonEmpty($('#transferEditorModal-destination').val());
-
-        $.ajax({
-            url: distanceUrl + '/v1/distance?from=$from$&to=$to$'.replace('$from$', from.toUpperCase()).replace('$to$', to.toUpperCase()),
-            method: 'GET',
-            success: function (response) {
-                var distanceStr = response;
-                $('#transferEditorModal-crowFlightDistance').val(distanceStr);
-                TransferEditor.updateDuration();
-            },
-            error: function (e) {
-                $('#transferEditorModal-crowFlightDistance').val("N/A");
-                TransferEditor.updateDuration();
-            }
-        });
-    },
-
-    updateDuration: function () {
-        var distanceStr = nonEmpty($('#transferEditorModal-crowFlightDistance').val());
-        if (distanceStr === 'N/A') {
-            $('#transferEditorModal-duration').val(null);
-            TransferEditor.resetTimeIn();
-            return;
-        }
-
-        var distance = parseInt(distanceStr, 10);
-        var method = $("input[name='transferEditorModal-method']:checked").val();
-
-        var speed;
-        var minTime;
-        switch (method) {
-            case "roads":
-                speed = 30;
-                minTime = 0.25;
-                break;
-            case "flights":
-                speed = 400;
-                minTime = 2;
-                break;
-            case "mach-3":
-                speed = 1500;
-                minTime = 0.25;
-                break;
-            default:
-                TransferEditor.resetTimeIn();
-                return;
-        }
-
-        var durationHours = minTime + distance / speed;
-
-        if (durationHours >= 24) {
-            TransferEditor.resetTimeIn();
-            return;
-        }
-
-        var durationMinutes = Math.round(durationHours * 60);
-        var durationStr = formatMinutesAsHMM(durationMinutes);
-        $('#transferEditorModal-duration').val(durationStr);
-
-        TransferEditor.updateTimeIn();
-    },
-
-    updateTimeIn: function () {
-        var timeOut = parseHHMM(nonEmpty($('#transferEditorModal-timeOut').val()));
-        if (timeOut === undefined) {
-            TransferEditor.resetTimeIn();
-            return;
-        }
-
-        var duration = parseHHMM(nonEmpty($('#transferEditorModal-duration').val()));
-        if (duration === undefined) {
-            TransferEditor.resetTimeIn();
-            return;
-        }
-
-        var timeInMinutes = timeOut['total'] + duration['total'];
-        if (timeInMinutes >= 24 * 60) {
-            timeInMinutes -= 24 * 60;
-        }
-
-        var timeInStr = formatMinutesAsHHMM(timeInMinutes);
-        $('#transferEditorModal-timeIn').val(timeInStr);
-    },
-
-    resetTimeIn: function () {
-        $('#transferEditorModal-timeIn').val(null);
-    },
-
-    apply: function () {
-        var dialog = $('#transferEditorModal');
-        var action = dialog.action;
-
-        var form = $('#transferEditorModal-form')[0];
-        var valid = form.checkValidity();
-        form.classList.add('was-validated');
-        if (!valid) {
-            return;
-        }
-
-        dialog.modal('hide');
-
-        var transfer = {
-            "UserID": myUserId,
-            "BeginningDT": $('#transferEditorModal-date').val() + 'T' + $('#transferEditorModal-timeOut').val(),
-            "RecordID": generateUUID(),
-            "Type": "transfer",
-            "Date": $('#transferEditorModal-date').val(),
-            "Transfer": {
-                "Departure": nonEmptyUpperCase($('#transferEditorModal-departure').val()),
-                "Destination": nonEmptyUpperCase($('#transferEditorModal-destination').val()),
-                "TimeOut": nonEmpty($('#transferEditorModal-timeOut').val()),
-                "TimeIn": nonEmpty($('#transferEditorModal-timeIn').val()),
-                "Method": $("input[name='transferEditorModal-method']:checked").val()
-            },
-            "Comment": nonEmpty($('#transferEditorModal-comment').val()),
-            "Remarks": nonEmpty($('#transferEditorModal-remarks').val())
-        };
-
-        $.ajax({
-            url: gatewayUrl,
-            method: 'POST',
-            dataType: 'json',
-            data: JSON.stringify(transfer),
-            success: function (response) {
-                showAlert("Transfer added successfully", "success", 5000);
-                // todo add transfer to grid and update grid
-            },
-            error: function (e) {
-                showAlert("Error happened!", "danger", 15000);
-                console.log(e.responseText);
-            }
-        });
+    } else { // bottom "add transfer", no discontinuity below
+        nextRecord = null;
+        previousRecord = new Record(records[records.length - 1]);
     }
+
+    const editorHtml = $("#transferEditorTemplate").html();
+    const elementAfterEditor = discontinuityRecord ? Flightlog.findElementByEntry({
+        id: 'discontinuity-' + discontinuityRecord.RecordID,
+        type: 'discontinuity',
+        record: discontinuityRecord
+    }) : $('.today-add-entry-row').first();
+    editorRow = $(editorHtml).insertBefore(elementAfterEditor);
+    editorRow.fields = {};
+    editorRow.calculated = {};
+
+    editorRow.previousRecord = previousRecord;
+    editorRow.nextRecord = nextRecord;
+
+    editorRow.fields.date = editorRow.find('#transferEditor-date'); // todo ak date format input processing
+    editorRow.fields.dateLimits = editorRow.find('#transferEditor-dateLimits');
+
+    editorRow.fields.departure = editorRow.find('#transferEditor-from');
+    editorRow.fields.departureName = editorRow.find('#transferEditor-fromName');
+    editorRow.fields.departure.keyup(transferAirportEditorKeyUp);
+
+    editorRow.fields.destination = editorRow.find('#transferEditor-to');
+    editorRow.fields.destinationName = editorRow.find('#transferEditor-toName');
+    editorRow.fields.destination.keyup(transferAirportEditorKeyUp);
+
+    editorRow.fields.timeOut = editorRow.find('#transferEditor-timeOut');
+    editorRow.fields.timeOut.keypress(timeEditorKeyPress).keyup(transferTimeEditorKeyUp);
+
+    editorRow.fields.timeIn = editorRow.find('#transferEditor-timeIn');
+
+    editorRow.fields.method = editorRow.find('#transferEditor-method');
+    editorRow.fields.method.change(recalculateTransferTimeFields);
+
+    editorRow.fields.totalTime = editorRow.find('#transferEditor-totalTime');
+    editorRow.fields.distance = editorRow.find('#transferEditor-distance');
+
+    editorRow.fields.comment = editorRow.find('#transferEditor-comment');
+    editorRow.fields.remarks = editorRow.find('#transferEditor-remarks');
+
+    const limitSinceDateOfFlight = previousRecord ? previousRecord.date : null;
+    const limitTillDateOfFlight = nextRecord ? nextRecord.date : null;
+    const prefilledDateOfFlight = limitTillDateOfFlight === null
+        ? today()
+        : (limitSinceDateOfFlight === null ? today() : limitSinceDateOfFlight);
+    editorRow.fields.date.val(prefilledDateOfFlight);
+
+    if (limitSinceDateOfFlight === null && limitTillDateOfFlight === null) {
+        editorRow.fields.dateLimits.val("No date limits found");
+    } else if (limitSinceDateOfFlight !== null && limitTillDateOfFlight !== null) {
+        editorRow.fields.dateLimits.val("Date since " + limitSinceDateOfFlight + " till " + limitTillDateOfFlight);
+    } else if (limitSinceDateOfFlight === null) {
+        editorRow.fields.dateLimits.val("Date till " + limitTillDateOfFlight);
+    } else { // limitTillDateOfFlight === null
+        editorRow.fields.dateLimits.val("Date since " + limitSinceDateOfFlight);
+    }
+
+    if (previousRecord && (previousRecord.isFlight() || previousRecord.isTransfer())) {
+        editorRow.fields.departure.val(previousRecord.destination);
+        disableField(editorRow.fields.departure);
+    }
+
+    refreshAirportNamesInEditor();
 }
 
-$(document).ready(function () {
-    $('#transferEditorModal-departure').keyup(function () {
-        TransferEditor.updateCrowFlightDistance();
-    });
+function saveTransferClicked() {
+    const dateOfFlight = editorRow.fields.date.val();
+    // todo ak check date format
+    // todo ak check date limits
+    // todo ak check date-time overlapping with other flights
+    const flight = {
+        "UserID": myUserId,
+        "BeginningDT": dateOfFlight + 'T' + editorRow.fields.timeOut.val(),
+        "RecordID": generateUUID(),
+        "Type": "transfer",
+        "Date": dateOfFlight,
+        "Transfer": {
+            "Departure": nonEmptyUpperCase(editorRow.fields.departure.val()),
+            "Destination": nonEmptyUpperCase(editorRow.fields.destination.val()),
+            "TimeOut": nonEmpty(editorRow.fields.timeOut.val()),
+            "TimeIn": nonEmpty(editorRow.fields.timeIn.val()),
+            "Method": nonEmpty($("input[name='transferEditor-method']:checked").val())
+        },
+        "Comment": nonEmpty(editorRow.fields.comment.val()),
+        "Remarks": nonEmpty(editorRow.fields.remarks.val())
+    };
 
-    $('#transferEditorModal-destination').keyup(function () {
-        TransferEditor.updateCrowFlightDistance();
-    });
+    let results = [];
+    results.push(validateFieldNonEmpty(flight["Date"], editorRow.fields.date));
+    results.push(validateFieldNonEmpty(flight["Transfer"]["Departure"], editorRow.fields.aircraftType));
+    results.push(validateFieldNonEmpty(flight["Transfer"]["Destination"], editorRow.fields.departure));
+    results.push(validateFieldNonEmpty(flight["Transfer"]["TimeOut"], editorRow.fields.destination));
+    results.push(validateFieldNonEmpty(flight["Transfer"]["TimeIn"], editorRow.fields.timeOut));
+    for (let i = 0; i < results.length; i++) {
+        if (!results[i]) {
+            return;
+        }
+    }
 
-    $('#transferEditorModal-timeOut').keyup(function () {
-        TransferEditor.updateTimeIn();
-    });
+    $.ajax({
+        url: gatewayUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(flight),
+        success: function (response) {/**/
+            showAlert("Transfer added successfully", "success", 5000);
 
-    $("input[name='transferEditorModal-method']").change(function () {
-        TransferEditor.updateDuration();
+            const record = flight;
+            if (editorRow.nextRecord === null) {
+                records.push(record);
+            } else {
+                let index = records.indexOf(editorRow.nextRecord.record);
+                records.splice(index, 0, flight);
+            }
+
+            const newVisibleEntries = Flightlog.buildVisibleEntries(records);
+            const diff = Flightlog.buildDiff(newVisibleEntries, visibleEntries).added;
+
+            for (let i in diff) {
+                const curr = diff[i];
+                const prev = newVisibleEntries[newVisibleEntries.indexOf(curr)-1]; // todo ak support when the very first element changed
+                const prevElement = Flightlog.findElementByEntry(prev);
+                Flightlog.insertElementAfter(curr, prevElement);
+            }
+
+            visibleEntries = newVisibleEntries;
+
+            discardClicked();
+        },
+        error: function (e) {
+            showAlert("Error happened!", "danger", 15000);
+            console.log(e.responseText);
+        }
     });
-});
+}
+
+function transferTimeEditorKeyUp(e) {
+    recalculateTransferTimeFields();
+}
+
+function recalculateTransferTimeFields() {
+    editorRow.fields.timeIn.val(null);
+    editorRow.fields.totalTime.val(null);
+
+    const timeOutStr = editorRow.fields.timeOut.val();
+    const timeOut = parseHHMM(timeOutStr);
+    if (!timeOut) {
+        return;
+    }
+
+    const distanceStr = editorRow.fields.distance.val();
+    const distance = parseInt(distanceStr, 10);
+    if (isNaN(distance)) {
+        return;
+    }
+
+    const method = $("input[name='transferEditor-method']:checked").val();
+
+    let speed;
+    let minTime;
+    switch (method) {
+        case "roads":
+            speed = 30;
+            minTime = 0.25;
+            break;
+        case "flights":
+            speed = 400;
+            minTime = 2;
+            break;
+        case "mach-3":
+            speed = 1500;
+            minTime = 0.25;
+            break;
+        default:
+            return;
+    }
+
+    const durationHours = minTime + distance / speed;
+
+    if (durationHours >= 24) {
+        return;
+    }
+
+    const durationMinutes = Math.round(durationHours * 60);
+    const durationStr = formatMinutesAsHMM(durationMinutes);
+
+    let timeInMinutes = timeOut['total'] + durationMinutes;
+    if (timeInMinutes >= 24 * 60) {
+        timeInMinutes -= 24 * 60;
+    }
+
+    const timeInStr = formatMinutesAsHHMM(timeInMinutes);
+    editorRow.fields.timeIn.val(timeInStr);
+    editorRow.fields.totalTime.val(durationStr);
+}
