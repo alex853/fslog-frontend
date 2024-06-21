@@ -101,6 +101,32 @@ const Flightlog = {
         return result;
     },
 
+    findElementByRecord: function (record) {
+        return Flightlog.findElementByEntry(Flightlog._createEntryByRecord(record));
+    },
+
+    _createEntryByRecord: function (record) {
+        if (RecordType.isFlight(record.Type)) {
+            return {
+                id: 'flight-' + record.RecordID,
+                type: 'flight',
+                record: record
+            };
+        } else if (RecordType.isTransfer(record.Type)) {
+            return {
+                id: 'transfer-' + record.RecordID,
+                type: 'transfer',
+                record: record
+            };
+        } else { // Discontinuity
+            return {
+                id: 'discontinuity-' + record.RecordID,
+                type: 'discontinuity',
+                record: record
+            };
+        }
+    },
+
     insertElementAfter: function(entry, previousElement) {
         if (entry.type === 'date-header') {
             const html = $("#dateHeader").html()
@@ -120,19 +146,11 @@ const Flightlog = {
             row.data("recordId", entry.record.RecordID);
             const html = makeTransferInfoHtml(entry.record);
             row.html(html);
-        } else { alert('discontinuity not supported in insertElementAfter'); } /*if (entry.type === 'discontinuity') {
-                    let rowHtml = $("#discontinuityRowTemplate").html();
-                    rowHtml = rowHtml
-                        .replace("$date$", currentDate)
-                        .replace("$comment$", record.Comment || '');
-                    flightsContainer
-                        .append(rowHtml);
-                    const row = flightsContainer.find(".row").last();
-                    row.data("recordId", record.RecordID);
-                }
-
-
-                $('<h1>hello world</h1>').insertAfter(previousElement);*/
+        } else if (entry.type === 'discontinuity') {
+            const rowHtml = makeDiscontinuityInfoHtml(entry.record);
+            const row = $(rowHtml).insertAfter(previousElement);
+            row.data("recordId", entry.record.RecordID);
+        }
     },
 
     removeElement: function (element) {

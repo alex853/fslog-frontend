@@ -49,3 +49,53 @@ function joinDiscontinuityClicked(recordId) {
         }
     });/**/
 }
+
+
+function splitFlightlogClicked(previousRecordId) {
+    const discontinuityDate = prompt("Please specify discontinuity date");
+    if (!discontinuityDate) {
+        return;
+    }
+
+    const previousRecord = findRecordById(previousRecordId);
+
+    const time = '00:00';
+    const discontinuity = {
+        "UserID": myUserId,
+        "BeginningDT": discontinuityDate + 'T' + time,
+        "RecordID": generateUUID(),
+        "Type": "discontinuity",
+        "Date": discontinuityDate,
+        "Discontinuity": {
+            "Time": time
+        },
+        "Comment": ""
+    };
+
+    $.ajax({
+        url: gatewayUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(discontinuity),
+        success: function (response) {/**/
+            showAlert("Discontinuity added successfully", "success", 5000);
+            insertRecordAfterAndUpdateFlightlog(previousRecord, discontinuity);
+        },
+        error: function (e) {
+            showAlert("Error happened!", "danger", 15000);
+            console.log(e.responseText);
+        }
+    });/**/
+}
+
+
+
+
+
+function makeDiscontinuityInfoHtml(record) {
+    const rowHtml = $("#discontinuityRowTemplate").html();
+    return rowHtml
+        .replaceAll("$recordId$", record.RecordID)
+        .replace("$date$", record.Date)
+        .replace("$comment$", record.Comment || '');
+}

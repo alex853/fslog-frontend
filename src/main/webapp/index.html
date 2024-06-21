@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
-    <!--    <script src="js/bootstrap.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>    <!--    <script src="js/bootstrap.min.js"></script>-->
     <script src="common.js"></script>
     <script src="flightlog.js"></script>
     <script src="common-editor.js"></script>
@@ -127,13 +127,8 @@
                             const html = makeTransferInfoHtml(record);
                             row.html(html);
                         } else { // Discontinuity
-                            let rowHtml = $("#discontinuityRowTemplate").html();
-                            rowHtml = rowHtml
-                                .replaceAll("$recordId$", record.RecordID)
-                                .replace("$date$", currentDate)
-                                .replace("$comment$", record.Comment || '');
-                            flightsContainer
-                                .append(rowHtml);
+                            const rowHtml = makeDiscontinuityInfoHtml(record);
+                            flightsContainer.append(rowHtml);
                             const row = flightsContainer.find(".flightlog-entry").last();
                             row.data("recordId", record.RecordID);
                         }
@@ -172,27 +167,6 @@
             }
         }
 
-        function switchFlightViewMode(btn) {
-            const row = $(btn).parent().parent().parent();
-            const recordId = row.data("recordId");
-            const record = findRecordById(recordId);
-
-            if (!record) {
-                alert("cant find record");
-                return;
-            }
-
-            let mode = record.mode;
-            if (mode === "short") {
-                mode = "full";
-            } else {
-                mode = "short";
-            }
-            record.mode = mode;
-            const flightHtml = makeFlightInfoHtml(record, mode);
-            row.html(flightHtml);
-        }
-
         function loadAndShowAirportInfo(icao) {
             if (icao) {
                 setTimeout(function () {
@@ -202,41 +176,6 @@
                     });
                 }, 10);
             }
-        }
-
-        function makeFlightInfoHtml(record, mode) {
-            let html = mode === "short"
-                ? $("#flightShortInfoTemplate").html()
-                : $("#flightFullInfoTemplate").html();
-            const departureIcao = record.Flight.Departure;
-            const destinationIcao = record.Flight.Destination;
-            html = html
-                //.replace("$uid$", uid)
-                .replace("$flight$", record.Flight.FlightNumber || '&nbsp;')
-                .replace("$callsign$", record.Flight.Callsign || '&nbsp;')
-                .replace("$type$", record.Flight.AircraftType || '&nbsp;')
-                .replace("$reg$", record.Flight.AircraftRegistration || '&nbsp;')
-                .replace("$dep$", departureIcao || '&nbsp;')
-                .replace("$depName$", "<span class='" + departureIcao + "'>" + departureIcao + "</span>")
-                .replace("$dest$", destinationIcao || '&nbsp;')
-                .replace("$destName$", "<span class='" + destinationIcao + "'>" + destinationIcao + "</span>")
-                .replace("$timeOut$", record.Flight.TimeOut || '&nbsp;')
-                .replace("$timeOff$", record.Flight.TimeOff || 'n/a')
-                .replace("$timeOn$", record.Flight.TimeOn || 'n/a')
-                .replace("$timeIn$", record.Flight.TimeIn || '&nbsp;')
-                .replace("$totalTime$", record.Flight.TotalTime || '&nbsp;')
-                .replace("$airTime$", record.Flight.AirTime || '&nbsp;')
-                .replace("$dist$", record.Flight.Distance || '&nbsp;')
-                .replace("$dctDist$", 'n/a')
-                .replace("$comment$", record.Comment || '&nbsp;')
-                .replace("$remarks$", record.Remarks || '&nbsp;');
-
-            loadAndShowAirportInfo(departureIcao);
-            loadAndShowAirportInfo(destinationIcao);
-
-            record.mode = mode;
-
-            return html;
         }
 
         function makeTransferInfoHtml(record) {
@@ -515,21 +454,18 @@
             Dropdown
         </a>
         <div class="dropdown-menu" aria-labelledby="statsDropdown">
-            <a class="dropdown-item" href="javascript:stats_flights_by_aircraft_type()">Flights flown by aircraft type</a>
-            <a class="dropdown-item" href="javascript:stats_hours_by_aircraft_type()">Hours flown by aircraft type</a>
-            <a class="dropdown-item" href="javascript:stats_flights_by_aircraft_registration()">Flights flown by aircraft tail #</a>
-            <a class="dropdown-item" href="javascript:stats_flights_by_year()">Flights flown by year</a>
-            <a class="dropdown-item" href="javascript:stats_flights_by_year_month()">Flights flown by year/month</a>
+            <a class="dropdown-item" href="javascript:statsOpenModal()">Charts</a>
+            <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="#">Top airports</a>
             <a class="dropdown-item" href="#">Top aircraft types</a>
             <a class="dropdown-item" href="#">Most flown aircraft tails</a>
+            <a class="dropdown-item" href="#">Airfield regions Uxxx, UUxx</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="#">Hours/flights by year AND THEN by aircraft type (stacked bar chart)</a>
             <a class="dropdown-item" href="#">Hours/flights by aircraft type RACE graph</a>
             <a class="dropdown-item" href="#">Day/night time/takeoff/landing</a>
             <a class="dropdown-item" href="#">VFR/IFR flights/time</a>
             <a class="dropdown-item" href="#">SE/ME flights/time</a>
-            <a class="dropdown-item" href="#">chartJs.org</a>
         </div>
     </div>
 
@@ -547,16 +483,16 @@
     <div style="color: blue;">
         TODO LIST
         <ul>
-            <li><b>Some trivial stats chart in modal dialog</b></li>
             <li><b>To finish code refactoring</b></li>
             <li><b>To rework discontinuity processing</b></li>
             <li><b>To rework initial flightlog generation using new code</b></li>
-            <li><b>Join discontinuity feature</b></li>
             <li>Show/edit tags</li>
             <li>Show one flight/transfer map</li>
-            <li>Snow flightlog on map</li>
+            <li>Show flightlog on map</li>
             <li>Edit flight feature</li>
-            <li>Add discontinuity feature</li>
+            <li>Edit transfer feature</li>
+            <li>Discontinuity editor for creation</li>
+            <li>Edit discontinuity feature</li>
             <li>Switching between users/profiles</li>
             <li>Own backend instead of AWS?</li>
             <li>Years dividers?</li>
@@ -593,7 +529,15 @@
             </div>
             <div class="col-3">
                 $comment$
-                <span style="width: 2em; float: right;"><button type="button" class="btn btn-outline-dark btn-xsm" onclick="switchFlightViewMode(this)">#</button></span>
+                <div class="btn-group" role="group" style="width: 2em; float: right;">
+                    <button id="btn-flight-short-$recordId$" type="button" class="btn dropdown-toggle btn-outline-dark btn-xsm" data-toggle="dropdown">#</button>
+                    <div class="dropdown-menu" aria-labelledby="btn-flight-short-$recordId$">
+                        <a class="dropdown-item" href="javascript:switchFlightViewModeClicked('$recordId$')">Info</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item disabled" href="#" aria-disabled="true">Edit</a>
+                        <a class="dropdown-item" href="javascript:splitFlightlogClicked('$recordId$')">Split</a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -623,7 +567,15 @@
             <div class="col-3">
                 $comment$<br>
                 $remarks$
-                <span style="width: 2em; float: right;"><button type="button" class="btn btn-outline-dark btn-xsm" onclick="switchFlightViewMode(this)">#</button></span>
+                <div class="btn-group" role="group" style="width: 2em; float: right;">
+                    <button id="btn-flight-full-$recordId$" type="button" class="btn dropdown-toggle btn-outline-dark btn-xsm" data-toggle="dropdown">#</button>
+                    <div class="dropdown-menu" aria-labelledby="btn-flight-full-$recordId$">
+                        <a class="dropdown-item" href="javascript:switchFlightViewModeClicked('$recordId$')">Info</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item disabled" href="#" aria-disabled="true">Edit</a>
+                        <a class="dropdown-item" href="javascript:splitFlightlogClicked('$recordId$')">Split</a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -909,8 +861,8 @@
                     <div class="col-8">
                         $comment$
                         <div class="btn-group" role="group" style="width: 2em; float: right;">
-                            <button id="btn-$recordId$" type="button" class="btn dropdown-toggle btn-outline-dark btn-xsm" data-toggle="dropdown">#</button>
-                            <div class="dropdown-menu" aria-labelledby="btn-$recordId$">
+                            <button id="btn-discontinuity-$recordId$" type="button" class="btn dropdown-toggle btn-outline-dark btn-xsm" data-toggle="dropdown">#</button>
+                            <div class="dropdown-menu" aria-labelledby="btn-discontinuity-$recordId$">
                                 <a class="dropdown-item" href="javascript:joinDiscontinuityClicked('$recordId$')">Join</a>
                             </div>
                         </div>
@@ -939,9 +891,36 @@
         </div>
 
         <div id="todayFooter">
-            <div style="height: 400px;"></div>
+            <div style="height: 200px;"></div>
         </div>
     </div>
 </div>
+
+<!-- Charts Modal -->
+<div class="modal fade" id="chartsModal" tabindex="-1" role="dialog" aria-labelledby="chartsModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartsModalTitle">Charts</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-type')">Flights by type</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('hours-by-type')">Hours by type</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-tail')">Flights by tail</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year')">Flights by year</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year-month')">Flights by year/month</button>
+
+                <div style="width: 100%;"><canvas id="chartCanvas"></canvas></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

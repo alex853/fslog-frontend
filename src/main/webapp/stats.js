@@ -1,5 +1,5 @@
 
-const StatsModel = {
+const StatsModel= {
     Filter: {
         FlightsOnly: function (each) {
             return RecordType.isFlight(each.Type);
@@ -22,14 +22,47 @@ const StatsModel = {
     },
 
     Metric: {
-        Count: function (each) {
+        Count: function () {
             return 1;
         },
 
         TotalTime: function (each) {
             const parsed = parseHHMM(each.Flight.TotalTime);
-            return  parsed ? parsed.total/60 : 0;
+            return parsed ? parsed.total / 60 : 0;
         }
+    }
+}
+
+const StatsCharts = {
+    'flights-by-type': {
+        label: 'Flights by aircraft type',
+        filter: StatsModel.Filter.FlightsOnly,
+        dimension: StatsModel.Dimension.AircraftType,
+        metric: StatsModel.Metric.Count
+    },
+    'hours-by-type': {
+        label: 'Hours by aircraft type',
+        filter: StatsModel.Filter.FlightsOnly,
+        dimension: StatsModel.Dimension.AircraftType,
+        metric: StatsModel.Metric.TotalTime
+    },
+    'flights-by-tail': {
+        label: 'Flights by aircraft tail #',
+        filter: StatsModel.Filter.FlightsOnly,
+        dimension: StatsModel.Dimension.AircraftRegistration,
+        metric: StatsModel.Metric.Count
+    },
+    'flights-by-year': {
+        label: 'Flights by year',
+        filter: StatsModel.Filter.FlightsOnly,
+        dimension: StatsModel.Dimension.Year,
+        metric: StatsModel.Metric.Count
+    },
+    'flights-by-year-month': {
+        label: 'Flights by year/month',
+        filter: StatsModel.Filter.FlightsOnly,
+        dimension: StatsModel.Dimension.YearMonth,
+        metric: StatsModel.Metric.Count
     }
 };
 
@@ -50,54 +83,51 @@ function calcStats(records, filter, dimension, metric) {
     return result;
 }
 
-function showStatsInAlert(stats) {
-    let msg = '';
-    let total = 0;
-    Object.keys(stats).sort().forEach(function(key) {
-        msg += key + " -> " + stats[key] + "\n";
-        total += stats[key];
+function statsCalcDataByChartId(chartId) {
+    const chart = StatsCharts[chartId];
+    return {
+        label: chart.label,
+        data: calcStats(records,
+            chart.filter,
+            chart.dimension,
+            chart.metric)
+    };
+}
+
+function statsOpenModal() {
+    statsDrawChart('flights-by-type');
+
+    $('#chartsModal').modal();
+}
+
+let statsShownChart;
+
+function statsDrawChart(chartId) {
+    const stats = statsCalcDataByChartId(chartId);
+
+    const data = [];
+
+    Object.keys(stats.data).sort().forEach(function (category) {
+        data.push({ category: category, value: stats.data[category] });
     });
-    msg += "TOTAL -> " + total;
-    console.log(msg);
-    alert(msg);
-}
 
-function stats_flights_by_aircraft_type() {
-    const result = calcStats(records,
-        StatsModel.Filter.FlightsOnly,
-        StatsModel.Dimension.AircraftType,
-        StatsModel.Metric.Count);
-    showStatsInAlert(result);
-}
+    if (statsShownChart) {
+        statsShownChart.destroy();
+    }
 
-function stats_hours_by_aircraft_type() {
-    const result = calcStats(records,
-        StatsModel.Filter.FlightsOnly,
-        StatsModel.Dimension.AircraftType,
-        StatsModel.Metric.TotalTime);
-    showStatsInAlert(result);
-}
-
-function stats_flights_by_aircraft_registration() {
-    const result = calcStats(records,
-        StatsModel.Filter.FlightsOnly,
-        StatsModel.Dimension.AircraftRegistration,
-        StatsModel.Metric.Count);
-    showStatsInAlert(result);
-}
-
-function stats_flights_by_year() {
-    const result = calcStats(records,
-        StatsModel.Filter.FlightsOnly,
-        StatsModel.Dimension.Year,
-        StatsModel.Metric.Count);
-    showStatsInAlert(result);
-}
-
-function stats_flights_by_year_month() {
-    const result = calcStats(records,
-        StatsModel.Filter.FlightsOnly,
-        StatsModel.Dimension.YearMonth,
-        StatsModel.Metric.Count);
-    showStatsInAlert(result);
+    statsShownChart = new Chart(
+        document.getElementById('chartCanvas'),
+        {
+            type: 'bar',
+            data: {
+                labels: data.map(row => row.category),
+                datasets: [
+                    {
+                        label: stats.label,
+                        data: data.map(row => row.value)
+                    }
+                ]
+            }
+        }
+    );
 }

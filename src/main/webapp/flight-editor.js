@@ -25,11 +25,9 @@ function addFlightClicked(discontinuityRecordId) {
     }
 
     const editorHtml = $("#flightEditorTemplate").html();
-    const elementAfterEditor = discontinuityRecord ? Flightlog.findElementByEntry({
-        id: 'discontinuity-' + discontinuityRecord.RecordID,
-        type: 'discontinuity',
-        record: discontinuityRecord
-    }) : $('.today-add-entry-row').first();
+    const elementAfterEditor = discontinuityRecord
+        ? Flightlog.findElementByRecord(discontinuityRecord)
+        : $('.today-add-entry-row').first();
     editorRow = $(editorHtml).insertBefore(elementAfterEditor);
     editorRow.fields = {};
     editorRow.calculated = {};
@@ -152,27 +150,7 @@ function saveFlightClicked() {
         data: JSON.stringify(flight),
         success: function (response) {/**/
             showAlert("Flight added successfully", "success", 5000);
-
-            const record = flight;
-            if (editorRow.nextRecord === null) {
-                records.push(record);
-            } else {
-                let index = records.indexOf(editorRow.nextRecord.record);
-                records.splice(index, 0, flight);
-            }
-
-            const newVisibleEntries = Flightlog.buildVisibleEntries(records);
-            const diff = Flightlog.buildDiff(newVisibleEntries, visibleEntries).added;
-
-            for (let i in diff) {
-                const curr = diff[i];
-                const prev = newVisibleEntries[newVisibleEntries.indexOf(curr)-1]; // todo ak support when the very first element changed
-                const prevElement = Flightlog.findElementByEntry(prev);
-                Flightlog.insertElementAfter(curr, prevElement);
-            }
-
-            visibleEntries = newVisibleEntries;
-
+            insertRecordAfterAndUpdateFlightlog(editorRow.previousRecord.record, flight);
             discardClicked();
         },
         error: function (e) {
@@ -182,7 +160,7 @@ function saveFlightClicked() {
     });/**/
 }
 
-function flightTimeEditorKeyUp(e) {
+function flightTimeEditorKeyUp() {
     recalculateFlightTimeFields();
 }
 
@@ -215,9 +193,68 @@ function recalculateFlightTimeFields() {
         if (time < 0) {
             time += 24 * 60;
         }
-        const airTimeStr = formatMinutesAsHMM(time);
-        editorRow.calculated.airTime = airTimeStr;
+        editorRow.calculated.airTime = formatMinutesAsHMM(time);
     } else {
         editorRow.calculated.airTime = null;
     }
+}
+
+
+
+
+
+
+function makeFlightInfoHtml(record, mode) {
+    let html = mode === "short"
+        ? $("#flightShortInfoTemplate").html()
+        : $("#flightFullInfoTemplate").html();
+    const departureIcao = record.Flight.Departure;
+    const destinationIcao = record.Flight.Destination;
+    html = html
+        .replaceAll("$recordId$", record.RecordID)
+        .replace("$flight$", record.Flight.FlightNumber || '&nbsp;')
+        .replace("$callsign$", record.Flight.Callsign || '&nbsp;')
+        .replace("$type$", record.Flight.AircraftType || '&nbsp;')
+        .replace("$reg$", record.Flight.AircraftRegistration || '&nbsp;')
+        .replace("$dep$", departureIcao || '&nbsp;')
+        .replace("$depName$", "<span class='" + departureIcao + "'>" + departureIcao + "</span>")
+        .replace("$dest$", destinationIcao || '&nbsp;')
+        .replace("$destName$", "<span class='" + destinationIcao + "'>" + destinationIcao + "</span>")
+        .replace("$timeOut$", record.Flight.TimeOut || '&nbsp;')
+        .replace("$timeOff$", record.Flight.TimeOff || 'n/a')
+        .replace("$timeOn$", record.Flight.TimeOn || 'n/a')
+        .replace("$timeIn$", record.Flight.TimeIn || '&nbsp;')
+        .replace("$totalTime$", record.Flight.TotalTime || '&nbsp;')
+        .replace("$airTime$", record.Flight.AirTime || '&nbsp;')
+        .replace("$dist$", record.Flight.Distance || '&nbsp;')
+        .replace("$dctDist$", 'n/a')
+        .replace("$comment$", record.Comment || '&nbsp;')
+        .replace("$remarks$", record.Remarks || '&nbsp;');
+
+    loadAndShowAirportInfo(departureIcao);
+    loadAndShowAirportInfo(destinationIcao);
+
+    record.mode = mode;
+
+    return html;
+}
+
+function switchFlightViewModeClicked(recordId) {
+    const record = findRecordById(recordId);
+    if (!record) {
+        alert("cant find record");
+        return;
+    }
+
+    let mode = record.mode;
+    if (mode === "short") {
+        mode = "full";
+    } else {
+        mode = "short";
+    }
+    record.mode = mode;
+    const flightHtml = makeFlightInfoHtml(record, mode);
+
+    const row = Flightlog.findElementByRecord(record);
+    row.html(flightHtml);
 }
