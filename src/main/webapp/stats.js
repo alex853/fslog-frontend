@@ -131,3 +131,38 @@ function statsDrawChart(chartId) {
         }
     );
 }
+
+function statsDrawChart1(chartId) {
+    const stats1 = statsCalcDataByChartId('flights-by-type');
+    const stats2 = statsCalcDataByChartId('hours-by-type');
+
+    const data = [];
+
+    Object.keys(stats1.data).sort().forEach(function (category) {
+        data.push({ category: category, value1: stats1.data[category], value2: stats2.data[category] });
+    });
+
+    if (statsShownChart) {
+        statsShownChart.destroy();
+    }
+
+    statsShownChart = new Chart(
+        document.getElementById('chartCanvas'),
+        {
+            type: 'bar',
+            data: {
+                labels: data.map(row => row.category),
+                datasets: [
+                    {
+                        label: stats1.label,
+                        data: data.map(row => row.value1)
+                    },
+                    {
+                        label: stats2.label,
+                        data: data.map(row => row.value2)
+                    }
+                ]
+            }
+        }
+    );
+}

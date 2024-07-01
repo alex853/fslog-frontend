@@ -162,6 +162,12 @@ function transferTimeEditorKeyUp(e) {
     recalculateTransferTimeFields();
 }
 
+function transferAirportEditorKeyUp(e) {
+    airportEditorKeyUp(e, function() {
+        recalculateTransferTimeFields();
+    });
+}
+
 function recalculateTransferTimeFields() {
     editorRow.fields.timeIn.val(null);
     editorRow.fields.totalTime.val(null);
@@ -216,4 +222,28 @@ function recalculateTransferTimeFields() {
     const timeInStr = formatMinutesAsHHMM(timeInMinutes);
     editorRow.fields.timeIn.val(timeInStr);
     editorRow.fields.totalTime.val(durationStr);
+}
+
+
+
+
+
+
+function makeTransferInfoHtml(record) {
+    let html = $("#transferInfoTemplate").html();
+    const departureIcao = record.Transfer.Departure;
+    const destinationIcao = record.Transfer.Destination;
+    html = html
+        .replace("$dep$", departureIcao || '')
+        .replace("$depName$", "<span class='" + departureIcao + "-grey'>" + departureIcao + "</span>")
+        .replace("$dest$", destinationIcao || '')
+        .replace("$destName$", "<span class='" + destinationIcao + "-grey'>" + destinationIcao + "</span>")
+        .replace("$timeOut$", record.Transfer.TimeOut || '')
+        .replace("$timeIn$", record.Transfer.TimeIn || '')
+        .replace("$comment$", record.Comment || '');
+
+    loadAndShowAirportInfo(departureIcao);
+    loadAndShowAirportInfo(destinationIcao);
+
+    return html;
 }

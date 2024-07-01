@@ -41,6 +41,8 @@
             .btn-sm;
             font-size: 0.4rem;
         }
+
+        .modal-xlg{max-width:1000px}
     </style>
 
     <script>
@@ -48,16 +50,10 @@
         const gatewayUrl = 'https://zpgxzc34pa.execute-api.us-east-1.amazonaws.com/poc';
         const distanceUrl = 'http://82.146.44.100:7091';
 
-        let records = undefined;
-        let visibleEntries = undefined;
-
-        const loadedAirportInfos = {};
+        let records = [];
+        let visibleEntries = [];
 
         let editorRow;
-
-        function today() {
-            return new Date().toISOString().split('T')[0];
-        }
 
         $(document).ready(function () {
             $.ajax({
@@ -66,90 +62,23 @@
                 dataType: 'json',
                 success: function (response) {
                     records = response.Items;
-                    let currentDate = undefined;
-                    //today let todayDate = today()+'111';
 
-                    const flightsContainer = $("#flightsContainer");
-                    // today let isTodayAdded = false;
-                    let previousIsDiscontinuity = false;
+                    const newVisibleEntries = Flightlog.buildVisibleEntries(records);
+                    const diff = Flightlog.buildDiff(newVisibleEntries, visibleEntries).added;
 
-                    for (let i = 0; i < records.length; i++) {
-                        let record = records[i];
-
-                        let currentIsDiscontinuity = RecordType.isDiscontinuity(record.Type);
-                        let toAddDateHeader = false;
-                        //today let toAddTodayHeader = false;
-
-                        if (currentDate !== record.Date) {
-                            currentDate = record.Date;
-
-                            /*today if (currentDate !== todayDate) {*/
-                                if (!currentIsDiscontinuity) {
-                                    toAddDateHeader = true;
-                                }
-                            /*today } else {
-                                toAddTodayHeader = true;
-                                isTodayAdded = true;
-                            }*/
-                        } else if (!currentIsDiscontinuity && previousIsDiscontinuity) {
-                            toAddDateHeader = true;
-                        }
-
-                        previousIsDiscontinuity = currentIsDiscontinuity;
-
-                        if (toAddDateHeader) {
-                            flightsContainer
-                                .append($("#dateHeader").html()
-                                    .replace("$date$", currentDate)
-                                    .replace("$year$", currentDate.substring(0, 4)));
-                            const dateHeader = flightsContainer.find(".date-header").last();
-                            dateHeader.data("date", currentDate);
-                        } /* today else if (toAddTodayHeader) {
-                            flightsContainer
-                                .append($("#todayHeader").html()
-                                    .replace("$date$", currentDate));
-                            const dateHeader = flightsContainer.find(".date-header").last();
-                            dateHeader.data("date", currentDate);
-                        } /**/
-
-                        if (RecordType.isFlight(record.Type)) {
-                            const rowHtml = $("#flightRowTemplate").html();
-                            flightsContainer.append(rowHtml);
-                            const row = flightsContainer.find(".flightlog-entry").last();
-                            row.data("recordId", record.RecordID);
-                            const html = makeFlightInfoHtml(record, "short");
-                            row.html(html);
-                        } else if (RecordType.isTransfer(record.Type)) {
-                            const rowHtml = $("#transferRowTemplate").html();
-                            flightsContainer.append(rowHtml);
-                            const row = flightsContainer.find(".flightlog-entry").last();
-                            row.data("recordId", record.RecordID);
-                            const html = makeTransferInfoHtml(record);
-                            row.html(html);
-                        } else { // Discontinuity
-                            const rowHtml = makeDiscontinuityInfoHtml(record);
-                            flightsContainer.append(rowHtml);
-                            const row = flightsContainer.find(".flightlog-entry").last();
-                            row.data("recordId", record.RecordID);
-                        }
+                    for (let i in diff) {
+                        const curr = diff[i];
+                        const currIndex = newVisibleEntries.indexOf(curr);
+                        const prevElement = currIndex > 0
+                            ? Flightlog.findElementByEntry(newVisibleEntries[currIndex-1])
+                            : $('#flightlog-top');
+                        Flightlog.insertElementAfter(curr, prevElement);
                     }
 
-                    /* today if (!isTodayAdded) {
-                        flightsContainer
-                            .append($("#todayHeader").html()
-                                .replace("$date$", todayDate))
-                            .append($("#todayAddEntryRow").html())
-                            .append($("#todayFooter").html());
-                    } else {*/
-                        flightsContainer
-                            .append($("#todayAddEntryRow").html())
-                            .append($("#todayFooter").html());
-                    // today }
+                    visibleEntries = newVisibleEntries;
 
                     $("html").scrollTop($(document).height());
                     //$('[data-toggle="tooltip"]').tooltip();
-
-                    visibleEntries = Flightlog.buildVisibleEntries(records);
                 },
                 error: function (e) {
                     // todo show error alert
@@ -157,272 +86,6 @@
                 }
             });
         });
-
-        function findRecordById(recordId) {
-            for (let i = 0; i < records.length; i++) {
-                const each = records[i];
-                if (each.RecordID === recordId) {
-                    return each;
-                }
-            }
-        }
-
-        function loadAndShowAirportInfo(icao) {
-            if (icao) {
-                setTimeout(function () {
-                    loadAirportInfoIfNeeded(icao, function () {
-                        $('.' + icao).html(airportInfo_flagIcaoName(icao));
-                        $('.' + icao + '-grey').html(airportInfo_flagGreyIcaoName(icao));
-                    });
-                }, 10);
-            }
-        }
-
-        function makeTransferInfoHtml(record) {
-            let html = $("#transferInfoTemplate").html();
-            const departureIcao = record.Transfer.Departure;
-            const destinationIcao = record.Transfer.Destination;
-            html = html
-                .replace("$dep$", departureIcao || '')
-                .replace("$depName$", "<span class='" + departureIcao + "-grey'>" + departureIcao + "</span>")
-                .replace("$dest$", destinationIcao || '')
-                .replace("$destName$", "<span class='" + destinationIcao + "-grey'>" + destinationIcao + "</span>")
-                .replace("$timeOut$", record.Transfer.TimeOut || '')
-                .replace("$timeIn$", record.Transfer.TimeIn || '')
-                .replace("$comment$", record.Comment || '');
-
-            loadAndShowAirportInfo(departureIcao);
-            loadAndShowAirportInfo(destinationIcao);
-
-            return html;
-        }
-
-        function validateFieldNonEmpty(value, field) {
-            const conditionResult = value !== undefined && value !== '';
-            if (!conditionResult) {
-                field.addClass('is-invalid');
-                setTimeout(function() { field.removeClass('is-invalid'); }, 10000);
-                return false;
-            } else {
-                return true;
-            }
-        }
-
-        function timeEditorKeyPress(e) {
-            const charCode = (e.which) ? e.which : e.keyCode
-
-            if (String.fromCharCode(charCode).match(/[^0-9]/g)) {
-                return false;
-            }
-
-            const editor = $(e.currentTarget);
-            let value = editor.val();
-            if (value.length === 2) {
-                value = value + ':';
-                editor.val(value);
-            } else if (value.length === 5) {
-                return false;
-            }
-
-            return true;
-        }
-
-        function airportEditorKeyUp(e, callback) {
-            const from = nonEmptyUpperCase(editorRow.fields.departure.val());
-            const to = nonEmptyUpperCase(editorRow.fields.destination.val());
-
-            refreshAirportNamesInEditor();
-
-            if (from === undefined || to === undefined) {
-                return;
-            }
-
-            $.ajax({
-                url: distanceUrl + '/v1/distance?from=$from$&to=$to$'.replace('$from$', from.toUpperCase()).replace('$to$', to.toUpperCase()),
-                method: 'GET',
-                success: function (response) {
-                    const distanceStr = response;
-                    if (!editorRow.fields.distance.val()) {
-                        editorRow.fields.distance.val(distanceStr);
-                    }
-                    if (callback) {
-                        callback();
-                    }
-                },
-                error: function (e) {
-                    editorRow.fields.distance.val(null);
-                    if (callback) {
-                        callback();
-                    }
-                }
-            });
-        }
-
-        function transferAirportEditorKeyUp(e) {
-            airportEditorKeyUp(e, function() {
-                recalculateTransferTimeFields();
-            });
-        }
-
-        function refreshAirportNamesInEditor() {
-            editorRow.fields.departureName.html(null);
-            editorRow.fields.destinationName.html(null);
-
-            const from = nonEmptyUpperCase(editorRow.fields.departure.val());
-            loadAirportInfoIfNeeded(from, function() {
-                editorRow.fields.departureName.html(airportInfo_flagNameLimited(from, 40));
-            });
-
-            const to = nonEmptyUpperCase(editorRow.fields.destination.val());
-            loadAirportInfoIfNeeded(to, function() {
-                editorRow.fields.destinationName.html(airportInfo_flagNameLimited(to, 40));
-            });
-        }
-
-        function getCountryFlagUrl(country, grey) {
-            const baseUrl = !grey
-                    ? "http://82.146.44.100/fatcow/FatCow_Icons16x16/flag_$s$.png"
-                    : "http://82.146.44.100/fatcow/FatCow_Icons16x16_Grey/flag_$s$.png";
-
-            let flagName = country.toLowerCase().replaceAll(' ', '_');
-
-            if (country === "Ascension Island") {
-                flagName = "saint_helena";
-            } else if (country === "Bahamas, The") {
-                flagName = "bahamas";
-            } else if (country === "Bosnia and Herzegovina") {
-                flagName = "bosnia";
-            } else if (country === "Timor-Leste") {
-                flagName = "east_timor";
-            } else if (country === "Fiji Islands") {
-                flagName = "fiji";
-            } else if (country === "Gambia, The") {
-                flagName = "gambia";
-            } else if (country === "Maldives") {
-                flagName = "maledives";
-            } else if (country === "Netherlands, The") {
-                flagName = "netherlands";
-            } else if (country === "Serbia and Montenegro") {
-                flagName = "serbia_montenegro";
-            } else if (country === "United Kingdom") {
-                flagName = "great_britain";
-            } else if (country === "United States") {
-                flagName = "usa";
-            }
-
-            return baseUrl.replace("$s$", flagName);
-        }
-
-        function getAirportCityName(info) {
-            const name = info.name;
-            const city = info.city;
-            let shownName = name;
-
-            if (!name.includes(city)) {
-                shownName = name + ", " + city;
-            }
-            return shownName;
-        }
-
-        function airportInfo_flagName(icao) {
-            const info = loadedAirportInfos[icao];
-            if (!info || info.loading || info.invalid) {
-                return null;
-            }
-            const url = getCountryFlagUrl(info.country);
-            let shownName = getAirportCityName(info);
-            return '<img src="' + url + '" style="vertical-align: text-top;"> ' + shownName;
-        }
-
-        function airportInfo_flagNameLimited(icao, maxLen) {
-            const info = loadedAirportInfos[icao];
-            if (!info || info.loading || info.invalid) {
-                return null;
-            }
-            const url = getCountryFlagUrl(info.country);
-            let shownName = getAirportCityName(info);
-            while (shownName.length > maxLen) {
-                const index = shownName.lastIndexOf(' ');
-                if (index === -1) {
-                    break;
-                }
-                shownName = shownName.substring(0, index) + '...';
-            }
-            return '<img src="' + url + '" style="vertical-align: text-top;"> ' + shownName;
-        }
-
-        function airportInfo_flagIcaoName(icao) {
-            const info = loadedAirportInfos[icao];
-            if (!info || info.loading || info.invalid) {
-                return null;
-            }
-            const url = getCountryFlagUrl(info.country);
-            let shownName = getAirportCityName(info);
-            return '<img src="' + url + '" style="vertical-align: text-top;"> <b>' + icao + '</b> ' + shownName;
-        }
-
-        function airportInfo_flagGreyIcaoName(icao) {
-            const info = loadedAirportInfos[icao];
-            if (!info || info.loading || info.invalid) {
-                return null;
-            }
-            const url = getCountryFlagUrl(info.country, true);
-            let shownName = getAirportCityName(info);
-            return '<img src="' + url + '" style="vertical-align: text-top;"> <b>' + icao + '</b> ' + shownName;
-        }
-
-        function loadAirportInfoIfNeeded(icao, callback) {
-            if (!icao) {
-                return;
-            }
-            const existingInfo = loadedAirportInfos[icao];
-            if (existingInfo) {
-                if (callback && !existingInfo.invalid && !existingInfo.loading) {
-                    callback();
-                }
-                return;
-            }
-
-            loadedAirportInfos[icao] = { loading: true };
-
-            $.ajax({
-                url: distanceUrl + '/v1/airport/info?icao=$icao$'.replace('$icao$', icao.toUpperCase()),
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    loadedAirportInfos[icao] = response;
-                    if (callback) {
-                        callback(response);
-                    }
-                },
-                error: function (e) {
-                    console.error("error loading airport info by '" + icao + "'");
-                    loadedAirportInfos[icao] = { invalid: true };
-                }
-            });
-        }
-
-        function discardClicked() {
-            if (editorRow) {
-                $("#flightsContainer").find('.fslog-flight-editor').remove();
-                $("#flightsContainer").find('.fslog-transfer-editor').remove();
-
-                showButton('.add-flight-button');
-                showButton('.add-transfer-button');
-                showButton('.start-flight-button');
-                showButton('.start-transfer-button');
-
-                editorRow = null;
-            }
-        }
-
-        function hideButton(name) {
-            $("#flightsContainer").find(name).addClass('d-none');
-        }
-
-        function showButton(name) {
-            $("#flightsContainer").find(name).removeClass('d-none');
-        }
 
     </script>
 </head>
@@ -456,6 +119,8 @@
         <div class="dropdown-menu" aria-labelledby="statsDropdown">
             <a class="dropdown-item" href="javascript:statsOpenModal()">Charts</a>
             <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#">TO SHOW 'Flown XXX hours in YY flights' instead of Dropdown and to open chart on click on it</a>
+            <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="#">Top airports</a>
             <a class="dropdown-item" href="#">Top aircraft types</a>
             <a class="dropdown-item" href="#">Most flown aircraft tails</a>
@@ -477,15 +142,13 @@
     <div class="container" id="flightsContainer">
         <p>&nbsp;</p>
         <p>&nbsp;</p>
-        <p>&nbsp;</p>
+        <p id="flightlog-top">&nbsp;</p>
     </div>
 
     <div style="color: blue;">
         TODO LIST
         <ul>
-            <li><b>To finish code refactoring</b></li>
             <li><b>To rework discontinuity processing</b></li>
-            <li><b>To rework initial flightlog generation using new code</b></li>
             <li>Show/edit tags</li>
             <li>Show one flight/transfer map</li>
             <li>Show flightlog on map</li>
@@ -898,7 +561,7 @@
 
 <!-- Charts Modal -->
 <div class="modal fade" id="chartsModal" tabindex="-1" role="dialog" aria-labelledby="chartsModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-xlg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="chartsModalTitle">Charts</h5>
@@ -912,6 +575,67 @@
                 <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-tail')">Flights by tail</button>
                 <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year')">Flights by year</button>
                 <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year-month')">Flights by year/month</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart1('flights-hours-by-type')">Flights/hours by type</button>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-2">
+                            Display
+                            <select id="chartsMetric" class="custom-select">
+                                <option value="1" selected>Flights/Hours</option>
+                                <option value="2">Flights</option>
+                                <option value="3">Hours</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            Break by
+                            <select id="chartsBreakBy" class="custom-select">
+                                <option value="1" selected>Type</option>
+                                <option value="2">Tail #</option>
+                                <option value="3">Year</option>
+                                <option value="4">Year/Month</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            Then by
+                            <select id="chartsThenBreakBy" class="custom-select">
+                                <option value="1" selected>None</option>
+                                <option value="0">Type</option>
+                                <option value="2">Tail #</option>
+                                <option value="3">Year</option>
+                                <option value="4">Year/Month</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            Show
+                            <select id="chartsResults" class="custom-select">
+                                <option value="1" selected>All</option>
+                                <option value="2">Top 10</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            Sort by
+                            <select id="chartsSortBy" class="custom-select">
+                                <option value="1" selected>Name</option>
+                                <option value="2">Value desc</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            Years
+                            <select id="chartsYears" class="custom-select">
+                                <option value="1" selected>All</option>
+                                <option value="2016">2016</option>
+                                <option value="2017">2017</option>
+                                <option value="2018">2018</option>
+                                <option value="2019">2019</option>
+                                <option value="2020">2020</option>
+                                <option value="2021">2021</option>
+                                <option value="2022">2022</option>
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
                 <div style="width: 100%;"><canvas id="chartCanvas"></canvas></div>
             </div>

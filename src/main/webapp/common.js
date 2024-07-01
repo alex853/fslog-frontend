@@ -1,5 +1,9 @@
 var myUserId = "afe78778-39d3-494d-b366-e696e75b96a4";
 
+function today() {
+    return new Date().toISOString().split('T')[0];
+}
+
 function parseHHMM(timeStr) {
     if (timeStr === undefined) {
         return undefined;
