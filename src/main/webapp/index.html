@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <!--link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico"-->
 
     <title>FSLog</title>
-
-    <!--link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/grid/"-->
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <script src="js/jquery-3.3.1.min.js"></script>
@@ -143,6 +140,19 @@
         <p>&nbsp;</p>
         <p>&nbsp;</p>
         <p id="flightlog-top">&nbsp;</p>
+
+        <div class="row p-2 mb-2 today-add-entry-row">
+            <div class="col-1"></div>
+            <div class="col-10 text-center">
+                <button type="button" class="btn btn-success btn add-flight-button" onclick="addFlightClicked(null)">Add Flight</button>
+                <button type="button" class="btn btn-info btn add-transfer-button" onclick="addTransferClicked(null)">Add Transfer</button>
+            </div>
+            <div class="col-1"></div>
+        </div>
+
+        <div>
+            <div style="height: 200px;"></div>
+        </div>
     </div>
 
     <div style="color: blue;">
@@ -540,21 +550,6 @@
 
         <div id="todayHeader">
             <h5 class="date-header flightlog-entry" style="margin-top: 3em;">Date $date$ <span class="badge badge-info">Today</span></h5>
-        </div>
-
-        <div id="todayAddEntryRow">
-            <div class="row p-2 mb-2 today-add-entry-row">
-                <div class="col-1"></div>
-                <div class="col-10 text-center">
-                    <button type="button" class="btn btn-success btn add-flight-button" onclick="addFlightClicked(null)">Add Flight</button>
-                    <button type="button" class="btn btn-info btn add-transfer-button" onclick="addTransferClicked(null)">Add Transfer</button>
-                </div>
-                <div class="col-1"></div>
-            </div>
-        </div>
-
-        <div id="todayFooter">
-            <div style="height: 200px;"></div>
         </div>
     </div>
 </div>
