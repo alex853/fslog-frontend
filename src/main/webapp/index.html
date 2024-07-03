@@ -565,34 +565,31 @@
                 </button>
             </div>
             <div class="modal-body">
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-type')">Flights by type</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('hours-by-type')">Hours by type</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-tail')">Flights by tail</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year')">Flights by year</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart('flights-by-year-month')">Flights by year/month</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="statsDrawChart1('flights-hours-by-type')">Flights/hours by type</button>
                 <div class="container">
                     <div class="row">
                         <div class="col-2">
                             Display
-                            <select id="chartsMetric" class="custom-select">
-                                <option value="1" selected>Flights/Hours</option>
-                                <option value="2">Flights</option>
-                                <option value="3">Hours</option>
+                            <select id="chartsMetric" class="custom-select" onchange="statsRedraw();">
+                                <option value="flights-hours" selected>Flights/Hours</option>
+                                <option value="flights">Flights</option>
+                                <option value="hours">Hours</option>
                             </select>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3">
                             Break by
-                            <select id="chartsBreakBy" class="custom-select">
-                                <option value="1" selected>Type</option>
-                                <option value="2">Tail #</option>
-                                <option value="3">Year</option>
-                                <option value="4">Year/Month</option>
+                            <select id="chartsBreakBy" class="custom-select" onchange="statsRedraw();">
+                                <option value="by-type" selected>Type</option>
+                                <option value="by-tail">Tail #</option>
+                                <option value="by-year">Year</option>
+                                <option value="by-year-month">Year/Month</option>
+                                <option value="by-departure-icao">Departure</option>
+                                <option value="by-departure-icao-region">Departure Region</option>
+                                <option value="by-departure-icao-subregion">Departure Subregion</option>
                             </select>
                         </div>
                         <div class="col-2">
                             Then by
-                            <select id="chartsThenBreakBy" class="custom-select">
+                            <select id="chartsThenBreakBy" class="custom-select" onchange="statsRedraw();">
                                 <option value="1" selected>None</option>
                                 <option value="0">Type</option>
                                 <option value="2">Tail #</option>
@@ -600,24 +597,18 @@
                                 <option value="4">Year/Month</option>
                             </select>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3">
                             Show
-                            <select id="chartsResults" class="custom-select">
-                                <option value="1" selected>All</option>
-                                <option value="2">Top 10</option>
-                            </select>
-                        </div>
-                        <div class="col-2">
-                            Sort by
-                            <select id="chartsSortBy" class="custom-select">
-                                <option value="1" selected>Name</option>
-                                <option value="2">Value desc</option>
+                            <select id="chartsShow" class="custom-select" onchange="statsRedraw();">
+                                <option value="all-by-name" selected>All (by name)</option>
+                                <option value="all-by-value-desc">All (by value desc)</option>
+                                <option value="top-10">Top 10</option>
                             </select>
                         </div>
                         <div class="col-2">
                             Years
-                            <select id="chartsYears" class="custom-select">
-                                <option value="1" selected>All</option>
+                            <select id="chartsYears" class="custom-select" onchange="statsRedraw();">
+                                <option value="show-all" selected>All</option>
                                 <option value="2016">2016</option>
                                 <option value="2017">2017</option>
                                 <option value="2018">2018</option>
@@ -632,7 +623,7 @@
                     </div>
                 </div>
 
-                <div style="width: 100%;"><canvas id="chartCanvas"></canvas></div>
+                <div style="width: 100%; height: 500px; display: flex; align-items: center; justify-content: center;"><canvas id="chartCanvas"></canvas></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

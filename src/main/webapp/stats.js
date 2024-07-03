@@ -18,6 +18,15 @@ const StatsModel= {
         },
         YearMonth: function (each) {
             return each.Date.substring(0, 7);
+        },
+        DepartureIcao: function (each) {
+            return each.Flight.Departure;
+        },
+        DepartureIcaoRegion: function (each) {
+            return each.Flight.Departure.substring(0, 1) + 'xxx';
+        },
+        DepartureIcaoSubregion: function (each) {
+            return each.Flight.Departure.substring(0, 2) + 'xx';
         }
     },
 
@@ -32,39 +41,6 @@ const StatsModel= {
         }
     }
 }
-
-const StatsCharts = {
-    'flights-by-type': {
-        label: 'Flights by aircraft type',
-        filter: StatsModel.Filter.FlightsOnly,
-        dimension: StatsModel.Dimension.AircraftType,
-        metric: StatsModel.Metric.Count
-    },
-    'hours-by-type': {
-        label: 'Hours by aircraft type',
-        filter: StatsModel.Filter.FlightsOnly,
-        dimension: StatsModel.Dimension.AircraftType,
-        metric: StatsModel.Metric.TotalTime
-    },
-    'flights-by-tail': {
-        label: 'Flights by aircraft tail #',
-        filter: StatsModel.Filter.FlightsOnly,
-        dimension: StatsModel.Dimension.AircraftRegistration,
-        metric: StatsModel.Metric.Count
-    },
-    'flights-by-year': {
-        label: 'Flights by year',
-        filter: StatsModel.Filter.FlightsOnly,
-        dimension: StatsModel.Dimension.Year,
-        metric: StatsModel.Metric.Count
-    },
-    'flights-by-year-month': {
-        label: 'Flights by year/month',
-        filter: StatsModel.Filter.FlightsOnly,
-        dimension: StatsModel.Dimension.YearMonth,
-        metric: StatsModel.Metric.Count
-    }
-};
 
 function calcStats(records, filter, dimension, metric) {
     const result = {};
@@ -83,86 +59,144 @@ function calcStats(records, filter, dimension, metric) {
     return result;
 }
 
-function statsCalcDataByChartId(chartId) {
-    const chart = StatsCharts[chartId];
-    return {
-        label: chart.label,
-        data: calcStats(records,
-            chart.filter,
-            chart.dimension,
-            chart.metric)
-    };
-}
-
 function statsOpenModal() {
-    statsDrawChart('flights-by-type');
+    statsRedraw();
 
     $('#chartsModal').modal();
 }
 
 let statsShownChart;
 
-function statsDrawChart(chartId) {
-    const stats = statsCalcDataByChartId(chartId);
+function statsRedraw() {
+    const selectedMetric = $( "#chartsMetric option:selected" ).val();
+    const selectedBreakBy = $( "#chartsBreakBy option:selected" ).val();
+    const selectedThenBreakBy = $( "#chartsThenBreakBy option:selected" ).val();
+    const selectedShow = $( "#chartsShow option:selected" ).val();
+    const selectedYear = $( "#chartsYears option:selected" ).val();
 
-    const data = [];
+    let dimension = StatsModel.Dimension.AircraftType;
+    switch (selectedBreakBy) {
+        case 'by-type':
+            dimension = StatsModel.Dimension.AircraftType;
+            break;
+        case 'by-tail':
+            dimension = StatsModel.Dimension.AircraftRegistration;
+            break;
+        case 'by-year':
+            dimension = StatsModel.Dimension.Year;
+            break;
+        case 'by-year-month':
+            dimension = StatsModel.Dimension.YearMonth;
+            break;
+        case 'by-departure-icao':
+            dimension = StatsModel.Dimension.DepartureIcao;
+            break;
+        case 'by-departure-icao-region':
+            dimension = StatsModel.Dimension.DepartureIcaoRegion;
+            break;
+        case 'by-departure-icao-subregion':
+            dimension = StatsModel.Dimension.DepartureIcaoSubregion;
+            break;
+    }
 
-    Object.keys(stats.data).sort().forEach(function (category) {
-        data.push({ category: category, value: stats.data[category] });
+    let filter;
+    if (selectedYear === 'show-all') {
+        filter = StatsModel.Filter.FlightsOnly;
+    } else {
+        filter = function (each) {
+            return StatsModel.Filter.FlightsOnly(each)
+                && each.Date.startsWith(selectedYear);
+        }
+    }
+
+    const stats = [];
+    if (selectedMetric === 'flights-hours') {
+        stats.push(calcFlightsStats(filter, dimension));
+        stats.push(calcHoursStats(filter, dimension))
+    } else if (selectedMetric === 'flights') {
+        stats.push(calcFlightsStats(filter, dimension));
+    } else if (selectedMetric === 'hours') {
+        stats.push(calcHoursStats(filter, dimension));
+    }
+
+    const rawData = [];
+    Object.keys(stats[0].data).forEach(function (category) {
+        const dataEntry = {
+            category: category
+        };
+        stats.forEach(function (eachStats, index) {
+            dataEntry['value' + index] = eachStats.data[category];
+        });
+        rawData.push(dataEntry);
     });
+
+    let data = [];
+    switch (selectedShow) {
+        case 'all-by-name':
+            rawData.sort(function (a, b) { return a.category.localeCompare(b.category); });
+            data = rawData;
+            break;
+        case 'all-by-value-desc':
+            rawData.sort(function (a, b) { return b.value0 - a.value0; });
+            data = rawData;
+            break;
+        case 'top-10':
+            rawData.sort(function (a, b) { return b.value0 - a.value0; });
+            data = rawData.slice(0, Math.min(10, rawData.length));
+            break;
+    }
 
     if (statsShownChart) {
         statsShownChart.destroy();
     }
 
-    statsShownChart = new Chart(
-        document.getElementById('chartCanvas'),
-        {
-            type: 'bar',
-            data: {
-                labels: data.map(row => row.category),
-                datasets: [
-                    {
-                        label: stats.label,
-                        data: data.map(row => row.value)
-                    }
-                ]
-            }
-        }
-    );
-}
-
-function statsDrawChart1(chartId) {
-    const stats1 = statsCalcDataByChartId('flights-by-type');
-    const stats2 = statsCalcDataByChartId('hours-by-type');
-
-    const data = [];
-
-    Object.keys(stats1.data).sort().forEach(function (category) {
-        data.push({ category: category, value1: stats1.data[category], value2: stats2.data[category] });
+    const datasets = [];
+    stats.forEach(function (eachStats, index) {
+        datasets.push({
+            label: eachStats.label,
+            data: data.map(row => row['value' + index])
+        });
     });
 
-    if (statsShownChart) {
-        statsShownChart.destroy();
-    }
-
     statsShownChart = new Chart(
         document.getElementById('chartCanvas'),
         {
-            type: 'bar',
+            type: selectedShow !== 'top-10' ? 'bar' : 'doughnut',
+            options: {
+                plugins: {
+                    legend: {
+                        position: selectedShow !== 'top-10' ? 'top' : 'right'
+                    }
+                }
+            },
             data: {
                 labels: data.map(row => row.category),
-                datasets: [
-                    {
-                        label: stats1.label,
-                        data: data.map(row => row.value1)
-                    },
-                    {
-                        label: stats2.label,
-                        data: data.map(row => row.value2)
-                    }
-                ]
+                datasets: datasets
             }
         }
     );
+
 }
+
+
+
+function calcFlightsStats(filter, dimension) {
+    return {
+        label: "Flights",
+        data: calcStats(records,
+            filter,
+            dimension,
+            StatsModel.Metric.Count)
+    };
+}
+
+function calcHoursStats(filter, dimension) {
+    return {
+        label: "Hours",
+        data: calcStats(records,
+            filter,
+            dimension,
+            StatsModel.Metric.TotalTime)
+    };
+}
+
