@@ -2,10 +2,8 @@
 const Flightlog = {
     buildVisibleEntries: function (records) {
         const result = [];
-        const todayDate = today();
 
         let currentDate = undefined;
-        let isTodayAdded = false;
         let previousIsDiscontinuity = false;
 
         for (let i = 0; i < records.length; i++) {
@@ -13,18 +11,12 @@ const Flightlog = {
 
             let currentIsDiscontinuity = RecordType.isDiscontinuity(record.Type);
             let toAddDateHeader = false;
-            let toAddTodayHeader = false;
 
             if (currentDate !== record.Date) {
                 currentDate = record.Date;
 
-                if (currentDate !== todayDate) {
-                    if (!currentIsDiscontinuity) {
-                        toAddDateHeader = true;
-                    }
-                } else {
-                    toAddTodayHeader = true;
-                    isTodayAdded = true;
+                if (!currentIsDiscontinuity) {
+                    toAddDateHeader = true;
                 }
             } else if (!currentIsDiscontinuity && previousIsDiscontinuity) {
                 toAddDateHeader = true;
@@ -36,12 +28,6 @@ const Flightlog = {
                 result.push({
                     id: 'date-header-' + currentDate,
                     type: 'date-header',
-                    date: currentDate
-                });
-            } else if (toAddTodayHeader) {
-                result.push({
-                    id: 'date-header-' + currentDate, // today
-                    type: 'date-header', // today
                     date: currentDate
                 });
             }
@@ -65,14 +51,6 @@ const Flightlog = {
                     record: record
                 });
             }
-        }
-
-        if (!isTodayAdded) {
-            result.push({
-                id: 'date-header-' + currentDate, // today
-                type: 'date-header', // today
-                date: currentDate
-            });
         }
 
         return result;
