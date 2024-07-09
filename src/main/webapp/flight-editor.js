@@ -29,6 +29,9 @@ function addFlightClicked(discontinuityRecordId) {
         ? Flightlog.findElementByRecord(discontinuityRecord)
         : $('.today-add-entry-row').first();
     editorRow = $(editorHtml).insertBefore(elementAfterEditor);
+
+    editorRow.mode = 'add';
+
     editorRow.fields = {};
     editorRow.calculated = {};
 
@@ -99,7 +102,116 @@ function addFlightClicked(discontinuityRecordId) {
     refreshAirportNamesInEditor();
 }
 
+function editFlightClicked(flightRecordId) {
+    hideButton('.add-flight-button');
+    hideButton('.add-transfer-button');
+    hideButton('.start-flight-button');
+    hideButton('.start-transfer-button');
+
+    const flightRecord = findRecordById(flightRecordId);
+    const flightRow = Flightlog.findElementByRecord(flightRecord);
+    flightRow.hide();
+
+    let previousRecord;
+    let nextRecord;
+
+    const flightRecordIndex = records.indexOf(flightRecord);
+    if (flightRecordIndex === records.length-1) { // "edit flight" for the last flight record ever
+        nextRecord = null;
+    } else {
+        nextRecord = records[flightRecordIndex + 1];
+    }
+    if (flightRecordIndex === 0) {
+        previousRecord = null;
+    } else {
+        previousRecord = records[flightRecordIndex - 1];
+    }
+
+    const editorHtml = $("#flightEditorTemplate").html();
+    const elementAfterEditor = nextRecord
+        ? Flightlog.findElementByRecord(nextRecord)
+        : $('.today-add-entry-row').first();
+    editorRow = $(editorHtml).insertBefore(elementAfterEditor);
+
+    editorRow.mode = 'edit';
+    editorRow.record = flightRecord;
+    editorRow.recordRow = flightRow;
+
+    editorRow.fields = {};
+    editorRow.calculated = {};
+
+    editorRow.previousRecord = previousRecord;
+    editorRow.nextRecord = nextRecord;
+
+    editorRow.fields.date = editorRow.find('#flightEditor-date');
+    editorRow.fields.dateLimits = editorRow.find('#flightEditor-dateLimits');
+
+    editorRow.fields.callsign = editorRow.find('#flightEditor-callsign');
+    editorRow.fields.flightNumber = editorRow.find('#flightEditor-flightNumber');
+    editorRow.fields.aircraftType = editorRow.find('#flightEditor-aircraftType');
+    editorRow.fields.aircraftRegistration = editorRow.find('#flightEditor-aircraftRegistration');
+
+    editorRow.fields.departure = editorRow.find('#flightEditor-from');
+    editorRow.fields.departureName = editorRow.find('#flightEditor-fromName');
+
+    editorRow.fields.destination = editorRow.find('#flightEditor-to');
+    editorRow.fields.destinationName = editorRow.find('#flightEditor-toName');
+
+    editorRow.fields.timeOut = editorRow.find('#flightEditor-timeOut');
+    editorRow.fields.timeOff = editorRow.find('#flightEditor-timeOff');
+
+    editorRow.fields.timeOn = editorRow.find('#flightEditor-timeOn');
+    editorRow.fields.timeIn = editorRow.find('#flightEditor-timeIn');
+
+    editorRow.fields.totalTime = editorRow.find('#flightEditor-totalTime');
+    editorRow.fields.distance = editorRow.find('#flightEditor-distance');
+
+    editorRow.fields.comment = editorRow.find('#flightEditor-comment');
+    editorRow.fields.remarks = editorRow.find('#flightEditor-remarks');
+
+    editorRow.fields.date.val(flightRecord.Date);
+    disableField(editorRow.fields.date);
+    editorRow.fields.dateLimits.val("");
+
+    editorRow.fields.callsign.val(flightRecord.Flight.Callsign);
+    editorRow.fields.flightNumber.val(flightRecord.Flight.FlightNumber);
+    editorRow.fields.aircraftType.val(flightRecord.Flight.AircraftType);
+    editorRow.fields.aircraftRegistration.val(flightRecord.Flight.AircraftRegistration);
+
+    editorRow.fields.departure.val(flightRecord.Flight.Departure);
+    disableField(editorRow.fields.departure);
+    editorRow.fields.destination.val(flightRecord.Flight.Destination);
+    disableField(editorRow.fields.destination);
+
+    editorRow.fields.timeOut.val(flightRecord.Flight.TimeOut);
+    disableField(editorRow.fields.timeOut);
+    editorRow.fields.timeOff.val(flightRecord.Flight.TimeOff);
+    disableField(editorRow.fields.timeOff);
+
+    editorRow.fields.timeOn.val(flightRecord.Flight.TimeOn);
+    disableField(editorRow.fields.timeOn);
+    editorRow.fields.timeIn.val(flightRecord.Flight.TimeIn);
+    disableField(editorRow.fields.timeIn);
+
+    editorRow.fields.totalTime.val(flightRecord.Flight.TotalTime);
+    editorRow.fields.distance.val(flightRecord.Flight.Distance);
+
+    editorRow.fields.comment.val(flightRecord.Comment);
+    editorRow.fields.remarks.val(flightRecord.Remarks);
+
+    refreshAirportNamesInEditor();
+}
+
 function saveFlightClicked() {
+    const mode = editorRow.mode;
+    if (mode === 'add') {
+        saveNewFlight();
+    } else if (mode === 'edit') {
+        updateExistingFlight();
+    }
+}
+
+function saveNewFlight() {
     const dateOfFlight = editorRow.fields.date.val();
     // todo ak check date format
     // todo ak check date limits
@@ -151,6 +263,36 @@ function saveFlightClicked() {
         success: function (response) {/**/
             showAlert("Flight added successfully", "success", 5000);
             insertRecordAfterAndUpdateFlightlog(editorRow.previousRecord.record, flight);
+            discardClicked();
+        },
+        error: function (e) {
+            showAlert("Error happened!", "danger", 15000);
+            console.log(e.responseText);
+        }
+    });/**/
+}
+
+function updateExistingFlight() {
+    const flight = editorRow.record;
+    flight.Flight.Callsign = nonEmptyUpperCase(editorRow.fields.callsign.val());
+    flight.Flight.FlightNumber = nonEmptyUpperCase(editorRow.fields.flightNumber.val());
+    flight.Flight.AircraftType = nonEmptyUpperCase(editorRow.fields.aircraftType.val());
+    flight.Flight.AircraftRegistration = nonEmptyUpperCase(editorRow.fields.aircraftRegistration.val());
+    flight.Flight.Distance = nonEmptyInt(editorRow.fields.distance.val());
+    flight.Comment = nonEmpty(editorRow.fields.comment.val());
+    flight.Remarks = nonEmpty(editorRow.fields.remarks.val());
+
+    $.ajax({
+        url: gatewayUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(flight),
+        success: function (response) {/**/
+            showAlert("Flight updated successfully", "success", 5000);
+            records[records.indexOf(editorRow.record)] = flight;
+            editorRow.recordRow.html(makeFlightInfoHtml(flight, editorRow.record.mode));
+            flight.mode = editorRow.record.mode;
+            editorRow.recordRow.show();
             discardClicked();
         },
         error: function (e) {

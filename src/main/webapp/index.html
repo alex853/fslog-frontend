@@ -162,7 +162,6 @@
             <li>Show/edit tags</li>
             <li>Show one flight/transfer map</li>
             <li>Show flightlog on map</li>
-            <li>Edit flight feature</li>
             <li>Edit transfer feature</li>
             <li>Discontinuity editor for creation</li>
             <li>Edit discontinuity feature</li>
@@ -207,7 +206,7 @@
                     <div class="dropdown-menu" aria-labelledby="btn-flight-short-$recordId$">
                         <a class="dropdown-item" href="javascript:switchFlightViewModeClicked('$recordId$')">Info</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item disabled" href="#" aria-disabled="true">Edit</a>
+                        <a class="dropdown-item" href="javascript:editFlightClicked('$recordId$')">Edit</a>
                         <a class="dropdown-item" href="javascript:splitFlightlogClicked('$recordId$')">Split</a>
                     </div>
                 </div>
@@ -245,7 +244,7 @@
                     <div class="dropdown-menu" aria-labelledby="btn-flight-full-$recordId$">
                         <a class="dropdown-item" href="javascript:switchFlightViewModeClicked('$recordId$')">Info</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item disabled" href="#" aria-disabled="true">Edit</a>
+                        <a class="dropdown-item" href="javascript:editFlightClicked('$recordId$')">Edit</a>
                         <a class="dropdown-item" href="javascript:splitFlightlogClicked('$recordId$')">Split</a>
                     </div>
                 </div>
